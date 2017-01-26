@@ -9,7 +9,9 @@ int encoderPinA2 = 3; //interrupt pin
 
 
 //global variables
-volatile int count = 0; //track how far the user has moved. gave it a random value for now to avoid neg numbers while testing
+volatile float count = 0; //track how far the user has moved. gave it a random value for now to avoid neg numbers while testing
+volatile float angularDist = 0;
+//volatile float angularDist = (count/(4*120))*360);
 volatile int pwm = 50;
 
 
@@ -44,6 +46,12 @@ int isr_encoderA1(){
         offMotor();
       }*/
   //}
+
+Serial.print(count,DEC);
+Serial.print("\t");
+Serial.print("");   
+Serial.print((count/(4*120))*360, DEC);
+Serial.println("\t");
 }
 
 void isr_encoderA2(){
@@ -68,6 +76,12 @@ void isr_encoderA2(){
       count--;          // CCW
     }
   }
+
+Serial.print(count,DEC);
+Serial.print("\t");
+Serial.print("");   
+Serial.print((count/(4*120))*360, DEC);
+Serial.println("\t");
 }
 
 void setup() {
@@ -85,9 +99,7 @@ Serial.begin (9600);
 void loop() { 
      //Serial.println (count, DEC); //print millis() in adjacent column as well so you can copy and paste time in excel to graph
      //encoder is 120 cycles/ revolution. Therefore count/4 = # cycles (if you're checking both encoder pins), #cycles/120=#revolutions, #revolutions * 360 = total angular count
-     turnMotorCW();
-     Serial.println (count, DEC);
-     delay(1000);
+     turnMotorCCW();
  }
 
  void turnMotorCW(){
