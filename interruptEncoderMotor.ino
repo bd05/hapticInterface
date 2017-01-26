@@ -4,33 +4,70 @@
 int enableA = 10;
 int pinA1 = 5;
 int pinA2 = 6;
-int encoderPinA1 = 3; //interrupt pin
-int encoderPinA2 = 4;
+int encoderPinA1 = 2; //interrupt pin
+int encoderPinA2 = 3; //interrupt pin
+
 
 //global variables
-volatile int distance = 0; //track how far the user has moved. gave it a random value for now to avoid neg numbers while testing
-// Keep track of last rotary value
-int lastCount = 0;
+volatile int count = 0; //track how far the user has moved. gave it a random value for now to avoid neg numbers while testing
+volatile int pwm = 50;
 
 
 //interrupt service routines
 
-int isr_encoder(){
-  static unsigned long lastInterruptTime = 0;
+int isr_encoderA1(){
+ /* static unsigned long lastInterruptTime = 0;
   unsigned long interruptTime = millis();
   
   // If interrupts come faster than 5ms, assume it's a bounce and ignore
-  if (interruptTime - lastInterruptTime > 5) {
-      if (digitalRead(encoderPinA1) == digitalRead(encoderPinA2)) { //if pulses are both high,motor is moving CW
-        distance++;
-      } else { //if one pulse is high and one pulse is low, motor is moving CCW
-        distance--;
-      }
+  if (interruptTime - lastInterruptTime > 5) { */
+        if (digitalRead(encoderPinA1) == HIGH) { //if signal A1 is on rising edge
+            if (digitalRead(encoderPinA2) == LOW) { //and signal A2 is low when on rising edge of A1
+              count++; 
+            } else { //signal A2 is high on rising edge of A1
+              count--; 
+            }
+        } else {
+          if (digitalRead(encoderPinA2) == HIGH) { 
+              count++; 
+            } else { 
+              count--; 
+            }
+        }
+    /*    if( count > 100000){
+          //pwm = pwm * (1/count);
+          digitalWrite(LED_BUILTIN, HIGH);
+          turnMotor();
+        }
+      if( count < 100000){
+        digitalWrite(LED_BUILTIN, LOW);
+        offMotor();
+      }*/
+  //}
+}
+
+void isr_encoderA2(){
+
+  // rising edge A2
+  if (digitalRead(encoderPinA2) == HIGH) {   
+   // check channel A to see which way encoder is turning
+    if (digitalRead(encoderPinA1) == HIGH) {  
+      count++;         // CW
+    } 
+    else {
+      count--;         // CCW
+    }
   }
-
-  //return encoder0Pos;
-  Serial.println (distance, DEC);
-
+  // falling edge A2
+  else { 
+    // check channel B to see which way encoder is turning  
+    if (digitalRead(encoderPinA1) == LOW) {   
+      count++;          // CW
+    } 
+    else {
+      count--;          // CCW
+    }
+  }
 }
 
 void setup() {
@@ -41,35 +78,34 @@ Serial.begin (9600);
  pinMode (pinA2, OUTPUT);
  pinMode (encoderPinA1, INPUT);
  pinMode (encoderPinA2, INPUT);
- attachInterrupt(digitalPinToInterrupt(encoderPinA1), isr_encoder, CHANGE);
+ attachInterrupt(digitalPinToInterrupt(encoderPinA1), isr_encoderA1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoderPinA2), isr_encoderA2, CHANGE);
+ pinMode(LED_BUILTIN, OUTPUT);
 }
 void loop() { 
-    // If the current rotary switch position has changed then update everything
-    if (distance != lastCount) {
-      // Keep track of this new value
-     // Serial.println (distance, DEC);
-      lastCount = distance ;
-
-      if(distance > 20 ){
-        turnMotor();
-      }
-    }
+     //Serial.println (count, DEC); //print millis() in adjacent column as well so you can copy and paste time in excel to graph
+     //encoder is 120 cycles/ revolution. Therefore count/4 = # cycles (if you're checking both encoder pins), #cycles/120=#revolutions, #revolutions * 360 = total angular count
+     turnMotorCW();
+     Serial.println (count, DEC);
+     delay(1000);
  }
 
- void turnMotor(){
-   //enabling motor A
-   Serial.println ("Enabling Motor A");
-   digitalWrite (enableA, HIGH);
-  //do something
-   //forward
-   Serial.println ("Forward");
-   digitalWrite (pinA1, HIGH);
-   digitalWrite (pinA2, LOW);
-   delay (1000);
-   //stop
-   Serial.println ("Stopping Motor A");
-   digitalWrite (enableA, LOW);
-   delay (1000);
+ void turnMotorCW(){
+     digitalWrite (enableA, HIGH);
+     analogWrite (pinA1, pwm); //not sure if A1 high + A2 low is CW or CCW
+     digitalWrite (pinA2, LOW);
    return;
+ }
+
+void turnMotorCCW(){
+     digitalWrite (enableA, HIGH);
+     analogWrite (pinA1, LOW); //not sure if A1 high + A2 low is CW or CCW
+     digitalWrite (pinA2, pwm);
+   return;
+}
+
+ void offMotor(){
+    digitalWrite (enableA, LOW);
+    return;
  }
 
