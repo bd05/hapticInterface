@@ -18,11 +18,8 @@ volatile int pwm = 50;
 //interrupt service routines
 
 int isr_encoderA1(){
- /* static unsigned long lastInterruptTime = 0;
   unsigned long interruptTime = millis();
-  
-  // If interrupts come faster than 5ms, assume it's a bounce and ignore
-  if (interruptTime - lastInterruptTime > 5) { */
+
         if (digitalRead(encoderPinA1) == HIGH) { //if signal A1 is on rising edge
             if (digitalRead(encoderPinA2) == LOW) { //and signal A2 is low when on rising edge of A1
               count++; 
@@ -36,22 +33,15 @@ int isr_encoderA1(){
               count--; 
             }
         }
-    /*    if( count > 100000){
-          //pwm = pwm * (1/count);
-          digitalWrite(LED_BUILTIN, HIGH);
-          turnMotor();
-        }
-      if( count < 100000){
-        digitalWrite(LED_BUILTIN, LOW);
-        offMotor();
-      }*/
-  //}
 
-Serial.print(count,DEC);
-Serial.print("\t");
-Serial.print("");   
-Serial.print((count/(4*120))*360, DEC);
-Serial.println("\t");
+//Serial.print(count,DEC);
+//Serial.print("\t");
+//Serial.print("");   
+//Serial.print((count/(4*120))*360, DEC);
+//Serial.print("\t");
+//Serial.print("");   
+//Serial.print(interruptTime);
+//Serial.println("\t");
 }
 
 void isr_encoderA2(){
@@ -76,12 +66,12 @@ void isr_encoderA2(){
       count--;          // CCW
     }
   }
-
-Serial.print(count,DEC);
-Serial.print("\t");
-Serial.print("");   
-Serial.print((count/(4*120))*360, DEC);
-Serial.println("\t");
+//
+//Serial.print(count,DEC);
+//Serial.print("\t");
+//Serial.print("");   
+//Serial.print((count/(4*120))*360, DEC);
+//Serial.println("\t");
 }
 
 void setup() {
@@ -93,26 +83,34 @@ Serial.begin (9600);
  pinMode (encoderPinA1, INPUT);
  pinMode (encoderPinA2, INPUT);
  attachInterrupt(digitalPinToInterrupt(encoderPinA1), isr_encoderA1, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(encoderPinA2), isr_encoderA2, CHANGE);
+ attachInterrupt(digitalPinToInterrupt(encoderPinA2), isr_encoderA2, CHANGE);
  pinMode(LED_BUILTIN, OUTPUT);
+ turnMotorCCW();
 }
 void loop() { 
      //Serial.println (count, DEC); //print millis() in adjacent column as well so you can copy and paste time in excel to graph
      //encoder is 120 cycles/ revolution. Therefore count/4 = # cycles (if you're checking both encoder pins), #cycles/120=#revolutions, #revolutions * 360 = total angular count
-     turnMotorCCW();
+      Serial.print(count,DEC);
+      Serial.print("\t");
+      Serial.print("");   
+      Serial.print((count/(4*120))*360, DEC);
+      Serial.print("\t");
+      Serial.print("");   
+      Serial.print(millis());
+      Serial.println("\t");
  }
 
  void turnMotorCW(){
-     digitalWrite (enableA, HIGH);
-     analogWrite (pinA1, pwm); //not sure if A1 high + A2 low is CW or CCW
+     digitalWrite (enableA, pwm);
+     analogWrite (pinA1, HIGH); //not sure if A1 high + A2 low is CW or CCW
      digitalWrite (pinA2, LOW);
    return;
  }
 
 void turnMotorCCW(){
-     digitalWrite (enableA, HIGH);
+     digitalWrite (enableA, pwm);
      analogWrite (pinA1, LOW); //not sure if A1 high + A2 low is CW or CCW
-     digitalWrite (pinA2, pwm);
+     digitalWrite (pinA2, HIGH);
    return;
 }
 
