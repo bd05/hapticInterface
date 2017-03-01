@@ -2,8 +2,9 @@
 //Define Pins
  //Motor A
  int enableA = 10;
- int pinA1 = 5;
- int pinA2 = 6;
+ int pinA1 = 4;
+ int pinA2 = 7;
+int pwm = 50;
 
 void setup() {
 Serial.begin (9600);
@@ -14,23 +15,24 @@ Serial.begin (9600);
 }
 void loop() {
  //enabling motor A
- Serial.println ("Enabling Motor A");
- digitalWrite (enableA, 50);
+
+
 //do something
  //forward
  Serial.println ("Forward");
- digitalWrite (pinA1, HIGH);
- digitalWrite (pinA2, LOW);
+ analogWrite (pinA1, 0);
+ analogWrite (pinA2, 255);
 //5s forward
- delay (5000);
+ //delay (5000);
 //reverse
- /*Serial.println ("Backward");
- digitalWrite (pinA1,LOW);
- digitalWrite (pinA2,HIGH);
+ //Serial.println ("Backward");
+ //digitalWrite (pinA1,LOW);
+ //digitalWrite (pinA2,HIGH);
 //5s backwards
- delay (5000);
+ //delay (5000);
 //stop
- Serial.println ("Stopping Motor A");
- digitalWrite (enableA, LOW);
- delay (5000);*/
+ //Serial.println ("Stopping Motor A");
+ //digitalWrite (pinA1, LOW);
+ //digitalWrite (pinA2, LOW);
+ //delay (5000);
  }
