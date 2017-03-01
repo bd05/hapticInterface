@@ -110,7 +110,7 @@ void loop() {
       if(pwm>=50){
         pwm=50;
       }
-      turnMotorCCW();
+      turnMotorCW();
     }
     else if(count <= -90)
     {
@@ -118,7 +118,7 @@ void loop() {
       if(pwm >=50){
         pwm=50;
       }
-       turnMotorCW();
+       turnMotorCCW();
     }
     else {
       offMotor();
