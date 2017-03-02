@@ -1,6 +1,5 @@
 #include <PID_v1.h>
 
-
 int enableA = 10;
 int pinA1 = 5;
 int pinA2 = 6;
@@ -14,7 +13,7 @@ volatile int pwm = 0;
 
 //PID variables
 volatile double Setpoint = 0, PID_Input = 0, PID_Output = 0; 
-double Kp=0.5, Ki=0, Kd=0.003;
+double Kp=0.6, Ki=0, Kd=0.04;
 PID myPID(&PID_Input, &PID_Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 
@@ -87,20 +86,18 @@ void loop() {
 
      //encoder is 120 cycles/ revolution. Therefore count/4 = # cycles (if you're checking both encoder pins), #cycles/120=#revolutions, #revolutions * 360 = total angular count
 
-
-       //pwm = 50;
-  
-    
-      turnMotorCCW();
+      turnMotorCW();
       if (Setpoint <= 50)
+     
         Setpoint = Setpoint + 5;
-     PID_Input = (double) count;
+     
+      PID_Input = (double) count;
       myPID.Compute();
-        pwm = (int) PID_Output;
+      pwm = (int) PID_Output;
     
       Serial.print(count,DEC);
       Serial.print("   "); 
-     Serial.print(pwm,DEC);
+      Serial.print(pwm,DEC);
       Serial.print("   "); 
       Serial.print(Setpoint, DEC);
       Serial.println("\t");
