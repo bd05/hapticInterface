@@ -1,5 +1,6 @@
 #include <PID_v1.h>
 
+
 int enableA = 10;
 int pinA1 = 5;
 int pinA2 = 6;
@@ -8,20 +9,17 @@ int encoderPinA2 = 3; //interrupt pin
 
 //global variables
 volatile int count = 0; //track how far the user has moved. gave it a random value for now to avoid neg numbers while testing
-volatile float angularDist = 0;
 volatile int pwm = 0;
+volatile int initial_flag = 1;
 
 //PID variables
-volatile double Setpoint = 0, PID_Input = 0, PID_Output = 0; 
-double Kp=0.6, Ki=0, Kd=0.04;
-PID myPID(&PID_Input, &PID_Output, &Setpoint, Kp, Ki, Kd, DIRECT);
-
+volatile double my_Setpoint = 0;
 
 int isr_encoderA1(){
 
   unsigned long interruptTime = millis();
 
-
+  initial_flag = 0; //once hit ISR, turn off initial flag
 
         if (digitalRead(encoderPinA1) == HIGH) { //if signal A1 is on rising edge
 
@@ -48,9 +46,18 @@ int isr_encoderA1(){
             }
 
         }
+        if (count >= my_Setpoint)
+        {
+          pwm = 0; //turnoff motor immediately after reaching setpoint
+        }
+        else
+        {
+          pwm = (pwm <= 25) ? 25 : (((int)my_Setpoint - count));
+          //25 is to make sure pwm is always bigger than 25, because anything lower motor won't move, count won't increment, pwm won't increase, everything stuck
+        }
+      
+
 }
-
-
 
 
 
@@ -76,34 +83,35 @@ Serial.begin (9600);
 
  pinMode(LED_BUILTIN, OUTPUT);
 
- myPID.SetMode(AUTOMATIC);
-
 }
 
 void loop() { 
 
-    // Serial.println (pwm, DEC); //print millis() in adjacent column as well so you can copy and paste time in excel to graph
+ 
 
      //encoder is 120 cycles/ revolution. Therefore count/4 = # cycles (if you're checking both encoder pins), #cycles/120=#revolutions, #revolutions * 360 = total angular count
 
-      turnMotorCW();
-      if (Setpoint <= 50)
-     
-        Setpoint = Setpoint + 5;
-     
-      PID_Input = (double) count;
-      myPID.Compute();
-      pwm = (int) PID_Output;
     
+      turnMotorCW();
+      if (my_Setpoint <= 100) // 100 is the utimate setpoint for now, make is a variable later on
+      {
+        my_Setpoint = (my_Setpoint + ((100 - my_Setpoint)/ 20));
+        //the divide by 20 thing is a PD tuning, the bigger the gap, the more setpoint is incremented, the higher pwm
+      }
+
+      if (initial_flag == 1)
+      {
+        pwm = 20; //in the beginning before ISR is reached for first time, want to make sure motor moves
+      }
+
+        
       Serial.print(count,DEC);
       Serial.print("   "); 
-      Serial.print(pwm,DEC);
+     Serial.print(pwm,DEC);
       Serial.print("   "); 
-      Serial.print(Setpoint, DEC);
+      Serial.print(my_Setpoint, DEC);
       Serial.println("\t");
       
-
-    
  }
 
 
