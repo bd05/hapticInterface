@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+    <head>
+      <title>ELEC 391</title>
+        <link rel="stylesheet" type="text/css" href="public/style.css">
+        <script src='/socket.io/socket.io.js'></script>
+        <script type="text/javascript" src="public/main.js"></script>
+    </head>
+    <body>
+        <div class="container">
+          <div class="directions-container">
+            <div class="direction"> 
+              <h4>Mode</h4>
+              <select onchange="changeMode(this.value)">
+                <option value="haptic">Haptic</option>
+                <option value="autonomous">Autonomous</option>
+              </select>
+            </div>
+
+            <div class="direction"> 
+              <h4>Shape</h4>
+              <select onchange="changeMode(this.value)">
+                <option value="line">Line</option>
+                <option value="circle">Circle</option>
+                <option value="fig-eight">Figure Eight</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+    </body>
+</html>

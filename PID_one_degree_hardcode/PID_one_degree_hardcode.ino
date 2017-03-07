@@ -1,5 +1,3 @@
-
-
 int enableA = 10;
 int pinA1 = 5;
 int pinA2 = 6;
@@ -12,9 +10,7 @@ volatile int pwm = 0;
 volatile int initial_flag = 1;
 
 //PID variables
-volatile long my_SetPoint = 0;
-long num;
-int startFlag = 0;
+volatile double my_Setpoint = 0;
 
 int isr_encoderA1(){
 
@@ -47,13 +43,13 @@ int isr_encoderA1(){
             }
 
         }
-        if (count >= my_SetPoint)
+        if (count >= my_Setpoint)
         {
-          pwm = 0; //turnoff motor immediately after reaching SetPoint
+          pwm = 0; //turnoff motor immediately after reaching setpoint
         }
         else
         {
-          pwm = (pwm <= 25) ? 25 : (((int)my_SetPoint - count));
+          pwm = (pwm <= 25) ? 25 : (((int)my_Setpoint - count));
           //25 is to make sure pwm is always bigger than 25, because anything lower motor won't move, count won't increment, pwm won't increase, everything stuck
         }
       
@@ -81,34 +77,23 @@ Serial.begin (9600);
  pinMode (encoderPinA2, INPUT);
 
  attachInterrupt(digitalPinToInterrupt(encoderPinA1), isr_encoderA1, CHANGE);
-  
+
  pinMode(LED_BUILTIN, OUTPUT);
-
-Serial.println("enter threshold: ");
-/* while(Serial.available() <=0){
-     entered_SetPoint = Serial.read();
- }
-
-Serial.println(entered_SetPoint);*/
-
 
 }
 
 void loop() { 
-  if( startFlag == 0){
-    while(Serial.available()>0){ 
-      num= Serial.parseInt();   
-      Serial.print(num);  
-      startFlag = 1;
-    }
-  }
 
-  if( startFlag != 0){
+ 
+
+     //encoder is 120 cycles/ revolution. Therefore count/4 = # cycles (if you're checking both encoder pins), #cycles/120=#revolutions, #revolutions * 360 = total angular count
+
+    
       turnMotorCCW();
-      if (my_SetPoint <= num ) // 100 is the utimate SetPoint for now, make is a variable later on
+      if (my_Setpoint <= 100) // 100 is the utimate setpoint for now, make is a variable later on
       {
-        my_SetPoint = (my_SetPoint + ((num - my_SetPoint)/ 20));
-        //the divide by 20 thing is a PD tuning, the bigger the gap, the more SetPoint is incremented, the higher pwm
+        my_Setpoint = (my_Setpoint + ((100 - my_Setpoint)/ 20));
+        //the divide by 20 thing is a PD tuning, the bigger the gap, the more setpoint is incremented, the higher pwm
       }
 
       if (initial_flag == 1)
@@ -121,9 +106,8 @@ void loop() {
       Serial.print("   "); 
      Serial.print(pwm,DEC);
       Serial.print("   "); 
-      Serial.print(my_SetPoint, DEC);
+      Serial.print(my_Setpoint, DEC);
       Serial.println("\t");
-    }
       
  }
 
@@ -164,4 +148,3 @@ void turnMotorCCW(){
     return;
 
  }
-
