@@ -38,7 +38,7 @@ void loop() {
     digitalWrite(ledPin,recievedVal); 
     toggleComplete = false;
   }
-/*
+
     // Potmeter
      sensorValue = analogRead(analogInPin);   
     // read the analog in value:
@@ -48,7 +48,7 @@ void loop() {
       Serial.print("E"); // end character
       prevValue = sensorValue;
     }  
-  delay(50); // give the Arduino some breathing room. */
+  delay(50); // give the Arduino some breathing room. 
 }
  
 int stringToInt()

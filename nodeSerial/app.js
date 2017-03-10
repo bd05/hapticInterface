@@ -15,6 +15,10 @@ var port = new SerialPort("COM5", {   //*change this to COM port arduino is on
 
 var mode;
 var shape;
+var receivedData = "";
+var sendData = "";
+var pathCoordinates = [];
+
 //set up server=====================================================================
 var fs = require( 'fs' );
 
@@ -60,11 +64,18 @@ port.on('open', function() {
         console.log('message written');
     });
 
-    /*port.on('data', function(data){
-      console.log(data[0]);
-      var text = data[0];
-      fs.writeFile( data_file, text );
-    });*/
+      port.on('data', function(data) {
+        receivedData += data.toString();
+        if (receivedData .indexOf('E') >= 0 && receivedData .indexOf('B') >= 0) {
+           sendData = receivedData.substring(receivedData .indexOf('B') + 1, receivedData .indexOf('E'));
+        }
+       pathCoordinates.push(sendData);
+       console.log(sendData);
+       fs.writeFile( data_file, pathCoordinates );
+       receivedData = "";
+        // send the incoming data to browser with websockets.
+       //socketServer.emit('update', sendData);
+      });  
 });
 
 // open errors will be emitted as an error event
