@@ -46,4 +46,3 @@ delay (5000);
 //digitalWrite (pinA2, LOW);
 //delay (5000);
  }
-

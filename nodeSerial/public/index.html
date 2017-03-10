@@ -2,9 +2,10 @@
 <html>
     <head>
       <title>ELEC 391</title>
-        <link rel="stylesheet" type="text/css" href="public/style.css">
+        <link rel="shortcut icon" href=""> <!--just to get rid of favicon error-->
+        <link rel="stylesheet" type="text/css" href="style.css">
         <script src='/socket.io/socket.io.js'></script>
-        <script type="text/javascript" src="public/main.js"></script>
+        <script type="text/javascript" src="main.js"></script>
     </head>
     <body>
         <div class="container">
@@ -19,14 +20,14 @@
 
             <div class="direction"> 
               <h4>Shape</h4>
-              <select onchange="changeMode(this.value)">
+              <select onchange="changeShape(this.value)">
                 <option value="line">Line</option>
                 <option value="circle">Circle</option>
                 <option value="fig-eight">Figure Eight</option>
               </select>
             </div>
           </div>
-
+        <button id="toggleLED">toggle LED</button>
         </div>
 
     </body>
