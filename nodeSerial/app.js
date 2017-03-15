@@ -31,8 +31,6 @@ app.use(express.static('public'));
 
 //sockets========================================================================
 io.on('connection', function (socket) {
-    //socket.emit('news', { hello: 'world' });
-
         socket.on('update LED', function(data){
             console.log("LED status: " + data);
             port.write(data + "E", function(err){
@@ -49,6 +47,11 @@ io.on('connection', function (socket) {
             console.log("selected shape: " + data);
             shape = data;
         });
+        socket.on('writeToFile', function(data){
+            var text = JSON.stringify(data);
+            fs.writeFile( data_file, text);
+        });
+
 });
 
 //serial port communication ==========================================================
@@ -66,15 +69,9 @@ port.on('open', function() {
 
       port.on('data', function(data) {
         receivedData += data.toString();
-        if (receivedData .indexOf('E') >= 0 && receivedData .indexOf('B') >= 0) {
-           sendData = receivedData.substring(receivedData .indexOf('B') + 1, receivedData .indexOf('E'));
-        }
-       pathCoordinates.push(sendData);
-       console.log(sendData);
-       fs.writeFile( data_file, pathCoordinates );
-       receivedData = "";
-        // send the incoming data to browser with websockets.
-       //socketServer.emit('update', sendData);
+        console.log(receivedData);
+        io.emit('updatePot', receivedData);
+        receivedData = "";
       });  
 });
 
@@ -82,5 +79,3 @@ port.on('open', function() {
 port.on('error', function(err) {
   console.log('Error: ', err.message);
 });
-
-

@@ -1,12 +1,35 @@
 var socket = io.connect('http://localhost:8080');
-socket.on('news', function (data) {
+/*socket.on('news', function (data) {
     console.log(data);
-});
+});*/
+var dataArr = [];
+var unParsedData = "";
+var reading = "";
+
+var DataPoint = function(val){
+    this.val = val;
+    this.rotor = "left";
+}
+
 window.onload=function(){
     var toggleLEDBtn = document.getElementById("toggleLED");
     toggleLEDBtn.addEventListener("click", toggle);
+    var potVal = document.getElementById("potVal");
 }
 var LEDStatus = 0;
+
+//sockets
+socket.on('updatePot', function(data){
+    unParsedData += data;
+    if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
+        //console.log(unParsedData);
+        reading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
+        document.getElementById("potVal").textContent = reading;
+        dataArr.push(reading);
+        unParsedData = "";
+    }
+    console.log(dataArr);
+});
 
 //toggle led
 function toggle(){
@@ -45,4 +68,11 @@ function changeShape(shape){
         hashCode = '4';
     }
     socket.emit('selected shape', hashCode);
+}
+
+//canvas
+function drawLine(fromx, fromy, tox, toy){
+        ctx.moveTo(fromx, fromy);
+        ctx.lineTo(tox, toy);
+        ctx.stroke();
 }
