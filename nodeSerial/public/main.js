@@ -1,22 +1,28 @@
 var socket = io.connect('http://localhost:8080');
-/*socket.on('news', function (data) {
-    console.log(data);
-});*/
-var dataArr = [];
-var unParsedData = "";
-var reading = "";
-
-var DataPoint = function(val){
-    this.val = val;
-    this.rotor = "left";
-}
 
 window.onload=function(){
     var toggleLEDBtn = document.getElementById("toggleLED");
     toggleLEDBtn.addEventListener("click", toggle);
     var potVal = document.getElementById("potVal");
+    
+    /*if(!canvas) 
+        console.log("canvas not found");
+    else
+        var ctx = canvas.getContext('2d');*/
 }
+
 var LEDStatus = 0;
+var dataArr = [];
+var unParsedData = "";
+var reading = "";
+var prevReading;
+var canvas = document.getElementById("whiteboard");
+var ctx = canvas.getContext('2d');
+
+var DataPoint = function(val){
+    this.val = val;
+    this.rotor = "left";
+}
 
 //sockets
 socket.on('updatePot', function(data){
@@ -26,6 +32,8 @@ socket.on('updatePot', function(data){
         reading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
         document.getElementById("potVal").textContent = reading;
         dataArr.push(reading);
+        drawLine(prevReading, reading, 50, 50); //hard coded in y-coordinates for canvas drawings for now
+        prevReading = reading;
         unParsedData = "";
     }
     console.log(dataArr);
@@ -71,7 +79,9 @@ function changeShape(shape){
 }
 
 //canvas
-function drawLine(fromx, fromy, tox, toy){
+function drawLine(fromx, tox, fromy, toy){
+        fromx = parseInt(fromx);
+        tox = parseInt(tox);
         ctx.moveTo(fromx, fromy);
         ctx.lineTo(tox, toy);
         ctx.stroke();

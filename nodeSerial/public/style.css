@@ -70,3 +70,9 @@ select {
     outline:none;
     display: inline-block;
 }
+
+/*canvas*/
+canvas{
+    border: 1px solid blue;
+    margin-top: 15px;
+}
