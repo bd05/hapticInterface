@@ -4,11 +4,6 @@ window.onload=function(){
     var toggleLEDBtn = document.getElementById("toggleLED");
     toggleLEDBtn.addEventListener("click", toggle);
     var potVal = document.getElementById("potVal");
-    
-    /*if(!canvas) 
-        console.log("canvas not found");
-    else
-        var ctx = canvas.getContext('2d');*/
 }
 
 var LEDStatus = 0;
@@ -18,6 +13,8 @@ var reading = "";
 var prevReading;
 var canvas = document.getElementById("whiteboard");
 var ctx = canvas.getContext('2d');
+ctx.strokeStyle = 'rgba(63, 116, 191, 0.05)';
+//ctx.fillStyle = 'rgba(0,0,0,0.7)';
 
 var DataPoint = function(val){
     this.val = val;
@@ -78,7 +75,7 @@ function changeShape(shape){
     socket.emit('selected shape', hashCode);
 }
 
-//canvas
+//canvas drawing
 function drawLine(fromx, tox, fromy, toy){
         fromx = parseInt(fromx);
         tox = parseInt(tox);
@@ -86,3 +83,50 @@ function drawLine(fromx, tox, fromy, toy){
         ctx.lineTo(tox, toy);
         ctx.stroke();
 }
+
+//D3======================================================
+var dataset = [ 5, 10, 13, 19, 21, 25, 22, 18, 15, 13,
+                11, 12, 15, 20, 18, 17, 16, 18, 23, 25 ];
+//Width and height
+var w = 500;
+var h = 1050;
+var barPadding = 1; 
+//Create SVG element
+var svg = d3.select("body")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h);
+
+//make bars for bar graph
+svg.selectAll("rect")
+   .data(dataset)
+   .enter()
+   .append("rect")
+   .attr("x", function(d, i) {
+    return i * (w/dataset.length - barPadding);  //Bar width of 20 plus 1 for padding
+    })
+   .attr("y", function(d) {
+    return h - d;  //Height minus data value
+    })
+   .attr("width", 20)
+   .attr("height", function(d) {
+    return d;
+    })
+   .attr("fill", function(d) {
+    return "rgb(0, 0, " + (d * 10) + ")";
+    });
+//label each bar with its value
+svg.selectAll("text")
+   .data(dataset)
+   .enter()
+   .append("text")
+   .text(function(d) {
+        return d;
+   })
+   .attr("x", function(d, i) {
+        return i * (w / dataset.length) + (w / dataset.length - barPadding) / 2;
+    })
+   .attr("y", function(d) {
+        return h - (d - 3);
+   })
+   .attr("text-anchor", "middle");
