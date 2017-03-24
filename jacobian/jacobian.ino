@@ -12,13 +12,19 @@ int R_pot_pin = A1;
 float L   = 8; //length of arm
 
 //Variables
+//haptic
 int L_reading;
 int R_reading;
 float q1_a, q2_a, x_a, y_a;
 volatile int pwm_left; //for the haptic logic, being changed in check_walls()
 volatile int pwm_right;
-int prescribe_path;
 
+
+//Varialbes
+//presribed_path
+int q1_done;
+int q2_done;
+int prescribe_path = 1;
 
 void setup() {
   Serial.begin (9600);
@@ -35,13 +41,13 @@ void setup() {
 
 void loop(){
 
- prescribe_path = digitalRead(7);
+// prescribe_path = digitalRead(7);
 
  
  if(prescribe_path == 0)
   {
     do_prescribe_path();
-    delay(2000);
+    delay(20000);
   }
   
   L_reading = analogRead(A0);
@@ -61,14 +67,14 @@ void loop(){
 
 float calculate_q1(int L_reading)
 {
-  float q1 =  -(((858 - ((float)L_reading)) / 34) + 3);
+  float q1 =  -(((867 - ((float)L_reading)) / 34) + 3);
 
   return q1;
 }
 
 float calculate_q2(int R_reading)
 {
-  float q2 = ((864 - ((float)R_reading)) / 32) + 3;
+  float q2 = ((875 - ((float)R_reading)) / 32) + 3;
 
   return q2;
 }
@@ -112,9 +118,16 @@ void check_walls()
 {
   if (x_a >= 0.8)
   {
-    pwm_right = 110;
+    pwm_right = 50;
     in_motor_right(pwm_right);
     off_motor_left();
+  }
+  
+  else if (x_a <= -0.8)
+  {
+    pwm_left = 50;
+    in_motor_left(pwm_left);
+     off_motor_right();    
   }
   else
   {
@@ -182,10 +195,13 @@ void do_prescribe_path() {
   q1_curr = calculate_q1(analogRead(L_pot_pin));
   q2_curr = calculate_q2(analogRead(R_pot_pin));
 
-  x_next = 1;
+ /* x_next = 1;
   y_next = 6.8;
   q1_next = inverse_kin_q1(x_next, y_next);
-  q2_next = inverse_kin_q2(x_next, y_next); 
+  q2_next = inverse_kin_q2(x_next, y_next); */
+
+  q1_next = -3;
+  q2_next = 4.23;
 
   Serial.print("q1_curr is ");
   Serial.print(q1_curr, DEC);
@@ -198,32 +214,38 @@ void do_prescribe_path() {
   Serial.println(q2_next, DEC);
 
 
-  while((abs(q1_next - q1_curr) >= 0.4) || (abs(q2_next - q2_curr) >= 0.4))
+  //clear flags before each move
+  q1_done = 0;
+  q2_done = 0;
+
+  while(((q1_done == 0) && (abs(q1_next - q1_curr) >= 0.4)) ||
+        ((q2_done == 0) && (abs(q2_next - q2_curr) >= 0.4)))//what if one matched, stopped, another contiuned and DRAGGED the first one
+  //chances of inifinite loop?
+  //PD control to lock it up; currently using flags to lock it up
   {
-    if(abs(q2_next - q2_curr) >= 0.5)
+    if(abs(q2_next - q2_curr) >= 0.4)
     {
-      if ((q2_next - q2_curr) >= 0.5)
+      if ((q2_next - q2_curr) >= 0.4)
       {
-        out_motor_right(210);
+     
+        out_motor_right(200);
       }
-      else if((q2_curr - q2_next) >= 0.5)
+      else if((q2_curr - q2_next) >= 0.4)
       {
-        //in_motor_right(210);
-        off_motor_right();
+        in_motor_right(200);
       }
     }
-    /*else if(abs(q2_next - q2_curr) >= 0.5)
+    else if(abs(q1_next - q1_curr) >= 0.4)
     {
-      if ((q1_next - q1_curr) >= 0.5)
+      if ((q1_next - q1_curr) >= 0.4)
       {
-        in_motor_left(130);
+        in_motor_left(200);
       }
-      else if((q1_curr - q1_next) >= 0.5)
+      else if((q1_curr - q1_next) >= 0.4)
       {
-        //in_motor_right(210);
-        out_motor_left(130);
+        out_motor_left(200);
       }
-    }*/
+    }
     else
     {
       off_motor_right();
@@ -232,14 +254,81 @@ void do_prescribe_path() {
     
      q1_curr = calculate_q1(analogRead(L_pot_pin));
      q2_curr = calculate_q2(analogRead(R_pot_pin));
-      Serial.print("q1_curr is ");
+
+     //flags setting, if one of them is done, don't ever change it again
+     q1_done = (abs(q1_curr - q1_next) < 0.4) ? 1 : 0;
+     q2_done = (abs(q2_curr - q2_next) < 0.4) ? 1 : 0;
+     
+   
+      
+ 
+ 
+  }
+    Serial.print("q1_curr is ");
   Serial.print(q1_curr, DEC);
   Serial.print("q2_curr is ");
   Serial.println(q2_curr, DEC);
+  off_motor_right();
+  off_motor_left();
   
+  q1_done = 0;
+  q2_done = 0;
+  
+  q1_curr = calculate_q1(analogRead(L_pot_pin));
+  q2_curr = calculate_q2(analogRead(R_pot_pin));
+  q1_next = -4.23;
+  q2_next = q2_curr;
+
+  while(((q1_done == 0) && (abs(q1_next - q1_curr) >= 0.4)) ||
+        ((q2_done == 0) && (abs(q2_next - q2_curr) >= 0.4)))//what if one matched, stopped, another contiuned and DRAGGED the first one
+  //chances of inifinite loop?
+  //PD control to lock it up; currently using flags to lock it up
+  {
+    if(abs(q2_next - q2_curr) >= 0.4)
+    {
+      if ((q2_next - q2_curr) >= 0.4)
+      {
+        out_motor_right(200);
+      }
+      else if((q2_curr - q2_next) >= 0.4)
+      {
+        in_motor_right(200);
+      }
+    }
+    else if(abs(q1_next - q1_curr) >= 0.4)
+    {
+      if ((q1_next - q1_curr) >= 0.4)
+      {
+        in_motor_left(200);
+      }
+      else if((q1_curr - q1_next) >= 0.4)
+      {
+        out_motor_left(200);
+      }
+    }
+    else
+    {
+      off_motor_right();
+      off_motor_left();
+    }
     
+ 
+  q1_curr = calculate_q1(analogRead(L_pot_pin));
+  q2_curr = calculate_q2(analogRead(R_pot_pin));
+     //flags setting, if one of them is done, don't ever change it again
+     q1_done = (abs(q1_curr - q1_next) < 0.4) ? 1 : 0;
+     q2_done = (abs(q2_curr - q2_next) < 0.4) ? 1 : 0;
+     
+   
+      
+
+ 
   }
 
+     Serial.print("q1_curr is ");
+  Serial.print(q1_curr, DEC);
+  Serial.print("q2_curr is ");
+  Serial.println(q2_curr, DEC);
   return;
   
   /*Serial.print(millis(), DEC);
