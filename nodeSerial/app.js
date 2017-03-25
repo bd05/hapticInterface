@@ -69,7 +69,7 @@ port.on('open', function() {
 
       port.on('data', function(data) {
         receivedData += data.toString();
-        console.log(receivedData);
+        //console.log(receivedData);
         io.emit('updatePot', receivedData);
         receivedData = "";
       });  

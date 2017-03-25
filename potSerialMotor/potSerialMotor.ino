@@ -15,7 +15,7 @@ int prevValue = 0;          // previous value from the potmeter
 //global variables
 volatile int count = 0; //track how far the user has moved. gave it a random value for now to avoid neg numbers while testing
 volatile float angularDist = 0;
-volatile int pwm = 0;
+volatile int pwm = 255;
 
 
 void setup() {
@@ -81,14 +81,14 @@ void loop() {
 
 
  void turnMotorCW(){
-     analogWrite (pinA1, 100); //not sure if A1 high + A2 low is CW or CCW
+     analogWrite (pinA1, pwm); //not sure if A1 high + A2 low is CW or CCW
      analogWrite (pinA2, 10);
    return;
  }
 
 void turnMotorCCW(){
      analogWrite (pinA1, 10); //not sure if A1 high + A2 low is CW or CCW
-     analogWrite (pinA2, 100);
+     analogWrite (pinA2, pwm);
    return;
 }
 

@@ -76,3 +76,17 @@ canvas{
     border: 1px solid blue;
     margin-top: 15px;
 }
+
+/*D3 scatterplot*/
+            /* Format X and Y Axis */
+.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}
