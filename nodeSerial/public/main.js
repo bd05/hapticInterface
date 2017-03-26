@@ -7,8 +7,7 @@ window.onload=function(){
 }
 
 var LEDStatus = 0;
-//var dataArr = [];
-var dataset = [[0,0]];
+var dataset = [];//[[0,0]];
 var unParsedData = "";
 var reading = "";
 var prevReading;
@@ -23,15 +22,13 @@ socket.on('updatePot', function(data){
         //console.log(unParsedData);
         reading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
         document.getElementById("potVal").textContent = reading;
-        //dataArr.push([reading,10]); //hardcoded as y=10 for now
-        dataset.push([reading,10]);
+        dataset.push([reading,10]); //hardcoded as y=10 for now
         drawLine(prevReading, reading, 50, 50); //hard coded in y-coordinates for canvas drawings for now
         prevReading = reading;
         //console.log(reading);
         unParsedData = "";
         update(); //update d3 scatterplot
     }
-    //console.log(dataArr);
 });
 
 //toggle led
@@ -122,9 +119,7 @@ var padding = 30;  // for chart edges
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic
-        .domain([0, d3.max(dataset, function(d) {
-            return d[0];  // input domain
-        })])
+        .domain([0, 1023])
         .range([padding, canvas_width - padding * 2]); // output range
 
 var yScale = d3.scale.linear()  // yScale is height of graphic
@@ -179,9 +174,7 @@ svg.append("g")
 function update() {
     // Update scale domains
     console.log("time to update");
-    xScale.domain([0, d3.max(dataset, function(d) {
-        return d[0]; 
-    })]);
+    xScale.domain([0, 1023]);
 
     yScale.domain([0, d3.max(dataset, function(d) {
         return d[1]; 
