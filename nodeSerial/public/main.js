@@ -3,14 +3,16 @@ var socket = io.connect('http://localhost:8080');
 window.onload=function(){
     var toggleLEDBtn = document.getElementById("toggleLED");
     toggleLEDBtn.addEventListener("click", toggle);
-    var potVal = document.getElementById("potVal");
+    var rPotVal = document.getElementById("rPotVal");
+    var lPotVal = document.getElementById("lPotVal");
 }
 
 var LEDStatus = 0;
 var dataset = [];//[[0,0]];
 var unParsedData = "";
-var reading = "";
-var prevReading;
+var rightReading = "";
+var leftReading = "";
+var prevRReading;
 var canvas = document.getElementById("whiteboard");
 var ctx = canvas.getContext('2d');
 ctx.strokeStyle = 'rgba(63, 116, 191, 0.05)';
@@ -19,15 +21,19 @@ ctx.strokeStyle = 'rgba(63, 116, 191, 0.05)';
 socket.on('updatePot', function(data){
     unParsedData += data;
     if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
-        //console.log(unParsedData);
-        reading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
-        document.getElementById("potVal").textContent = reading;
-        dataset.push([reading,10]); //hardcoded as y=10 for now
-        drawLine(prevReading, reading, 50, 50); //hard coded in y-coordinates for canvas drawings for now
-        prevReading = reading;
-        //console.log(reading);
+        rightReading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
+        document.getElementById("rPotVal").textContent = rightReading;
+        dataset.push([rightReading,leftReading]); 
+        drawLine(prevRReading, rightReading, 50, 50); //hard coded in y-coordinates for canvas drawings for now
+        prevRReading = rightReading;
         unParsedData = "";
         update(); //update d3 scatterplot
+    }
+    if(unParsedData.charAt(0) === "C" && unParsedData.slice(-1) === "F"){
+        console.log("parsing left reading");
+        leftReading = unParsedData.substring(unParsedData.indexOf('C') + 1, unParsedData.indexOf('F'));
+        document.getElementById("lPotVal").textContent = leftReading;
+        unParsedData = "";
     }
 });
 

@@ -10,6 +10,11 @@ boolean pwmComplete = false;
 const int analogInPin = A0;
 int sensorValue = 0;        // value read from the potmeter
 int prevValue = 0;          // previous value from the potmeter
+
+//2nd potentiometer
+const int analogInPin1 = A1;
+int sensorValue1 = 0;        // value read from the potmeter
+int prevValue1 = 0;          // previous value from the potmeter
  
 void setup() {
   // initialize serial:
@@ -17,6 +22,16 @@ void setup() {
   // init LED
   pinMode(ledPin,OUTPUT);
   digitalWrite(ledPin,0);
+
+  //initialize potentiometer for web client so D3 doesn't confused by NaN values
+  sensorValue = analogRead(analogInPin); // Potmeter0
+  sensorValue1 = analogRead(analogInPin1); //Potmeter1
+  Serial.print("B"); // begin character 
+  Serial.print(sensorValue);  
+  Serial.print("E"); // end character
+  Serial.print("C"); // begin character 
+  Serial.print(sensorValue1);  
+  Serial.print("F"); // end character     
 }
  
 void loop() {
@@ -39,14 +54,22 @@ void loop() {
     toggleComplete = false;
   }
 
-    // Potmeter
-     sensorValue = analogRead(analogInPin);   
+//===============================POTENTIOMETER READINGS SEND TO NODE.JS SERVER====================================
+     sensorValue = analogRead(analogInPin); // Potmeter0
+     sensorValue1 = analogRead(analogInPin1); //Potmeter1
     // read the analog in value:
-    if(prevValue != sensorValue){
+    if(abs(sensorValue - prevValue) >= 3){
       Serial.print("B"); // begin character 
       Serial.print(sensorValue);  
       Serial.print("E"); // end character
       prevValue = sensorValue;
+    }  
+
+    if(abs(sensorValue1 - prevValue1) >= 3){
+      Serial.print("C"); // begin character 
+      Serial.print(sensorValue1);  
+      Serial.print("F"); // end character
+      prevValue1 = sensorValue1;
     }  
   delay(50); // give the Arduino some breathing room. 
 }
