@@ -56,6 +56,11 @@ void loop(){
   q2_a = calculate_q2(R_reading);
   x_a = direct_kin_x(q1_a, q2_a);
   y_a = direct_kin_y(q1_a, q2_a);
+
+  Serial.print("q1_a is ");
+  Serial.print(q1_a, DEC);
+  Serial.print("q2_a is ");
+  Serial.println(q2_a, DEC);
     
   Serial.print("x_a is ");
   Serial.print(x_a, DEC);

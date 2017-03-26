@@ -8,11 +8,16 @@ window.onload=function(){
 }
 
 var LEDStatus = 0;
-var dataset = [];//[[0,0]];
+var dataset = [];
 var unParsedData = "";
 var rightReading = "";
 var leftReading = "";
 var prevRReading;
+var qr; //q2_a in arduino code
+var ql; //q1_a in arduino code
+var x_a;
+var y_a;
+var point;
 var canvas = document.getElementById("whiteboard");
 var ctx = canvas.getContext('2d');
 ctx.strokeStyle = 'rgba(63, 116, 191, 0.05)';
@@ -20,20 +25,29 @@ ctx.strokeStyle = 'rgba(63, 116, 191, 0.05)';
 //sockets
 socket.on('updatePot', function(data){
     unParsedData += data;
+    //right potentiometer reading
     if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
         rightReading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
         document.getElementById("rPotVal").textContent = rightReading;
-        dataset.push([rightReading,leftReading]); 
+        //dataset.push([rightReading,leftReading]); 
         drawLine(prevRReading, rightReading, 50, 50); //hard coded in y-coordinates for canvas drawings for now
         prevRReading = rightReading;
-        unParsedData = "";
+        unParsedData = ""; //reset string that receives data
+        //math transforms:
+        point = getCoords(rightReading,leftReading);
+        console.log(point);
+        dataset.push(point);
         update(); //update d3 scatterplot
     }
+    //left potentiometer reading
     if(unParsedData.charAt(0) === "C" && unParsedData.slice(-1) === "F"){
-        console.log("parsing left reading");
         leftReading = unParsedData.substring(unParsedData.indexOf('C') + 1, unParsedData.indexOf('F'));
         document.getElementById("lPotVal").textContent = leftReading;
         unParsedData = "";
+        point = getCoords(rightReading,leftReading);
+        //console.log(point);
+        dataset.push(point);
+        update(); //update d3 scatterplot
     }
 });
 
@@ -86,17 +100,29 @@ function drawLine(fromx, tox, fromy, toy){
 }
 
 //=============MATH FOR CALCULATING POSITION==========================================
-function calculate_q1(L_reading)
+function getCoords(rightReading, leftReading){
+    console.log("rightReading: " + rightReading + " leftReading: " + leftReading);
+    var point = [];
+    var qr = calculate_qr(rightReading);
+    var ql = calculate_ql(leftReading);
+    var x = direct_kin_x(ql,qr);
+    var y = direct_kin_y(ql,qr);
+    console.log(y);
+    point = [x,y];
+    return point;
+}
+
+function calculate_ql(L_reading)
 {
   var q1 =  -(((867 - L_reading) / 34) + 3);
-
+  console.log("q1: " + q1);
   return q1;
 }
 
-function calculate_q2(R_reading)
+function calculate_qr(R_reading)
 {
   var q2 = ((875 - R_reading) / 32) + 3;
-
+  console.log("q2: " + q2);
   return q2;
 }
 
@@ -107,10 +133,15 @@ function direct_kin_x (q1, q2){
  }
 
 function direct_kin_y (q1, q2){
+    var L = 8; //length of arm
     var y = 0, delta_q = 0;
-    delta_q = (abs(q1 - q2) / 2);
-    y = Math.sqrt(Math.pow(L,2) - Math.pow(delta_q,2));
-
+    delta_q = (Math.abs(q1 - q2) / 2);
+    var a = Math.pow(L,2);
+    var b = Math.pow(delta_q,2);
+    var diff = a - b; //comes out neg when it shouldn't
+    console.log("diff= " + diff);
+    y = Math.sqrt(Math.pow(L,2) - Math.pow(delta_q,2)); //this is messing up
+    console.log("y: " + y);
     return y;
  }
 
@@ -125,7 +156,7 @@ var padding = 30;  // for chart edges
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic
-        .domain([0, 1023])
+        .domain([0, 10])
         .range([padding, canvas_width - padding * 2]); // output range
 
 var yScale = d3.scale.linear()  // yScale is height of graphic
@@ -140,7 +171,7 @@ var xAxis = d3.svg.axis()
     .orient("bottom")
     .ticks(5);
 
-            // Define Y axis
+// Define Y axis
 var yAxis = d3.svg.axis()
     .scale(yScale)
     .orient("left")
@@ -151,6 +182,11 @@ var svg = d3.select("h3")  // This is where we put our vis
     .append("svg")
     .attr("width", canvas_width)
     .attr("height", canvas_height)
+
+//tooltip - display coordinate on hover
+var tooltip = d3.select("body").append("div")   
+    .attr("class", "tooltip")               
+    .style("opacity", 0);
 
 // Create Circles
 svg.selectAll("circle")
@@ -163,7 +199,20 @@ svg.selectAll("circle")
     .attr("cy", function(d) {  // Circle's Y
         return yScale(d[1]);
     })
-    .attr("r", 2);  // radius
+    .attr("r", 2)
+    .on("mouseover", function(d) {      
+            tooltip.transition()        
+                .duration(200)      
+                .style("opacity", .9);      
+            div .html(xScale(d[0]) + "<br/>"  + yScale(d[1]))  
+                .style("left", (d3.event.pageX) + "px")     
+                .style("top", (d3.event.pageY - 28) + "px");    
+            })                  
+        .on("mouseout", function(d) {       
+            tooltip.transition()        
+                .duration(500)      
+                .style("opacity", 0);   
+        });  // radius
 
 // Add to X axis
 svg.append("g")
@@ -179,8 +228,7 @@ svg.append("g")
 
 function update() {
     // Update scale domains
-    console.log("time to update");
-    xScale.domain([0, 1023]);
+    xScale.domain([0, 10]);
 
     yScale.domain([0, d3.max(dataset, function(d) {
         return d[1]; 
@@ -205,7 +253,7 @@ function update() {
     svg.selectAll("circle")
         .data(dataset)  // Update with new data
         .transition()  // Transition from old to new
-        .duration(1000)  // Length of animation
+        .duration(500)  // Length of animation
         .each("start", function() {  // Start animation
                 d3.select(this)  // 'this' means the current element
                     .attr("fill", "red")  // Change color
@@ -225,7 +273,7 @@ function update() {
             d3.select(this)  // 'this' means the current element
             .transition()
             .duration(500)
-            .attr("fill", "black")  // Change color
+            .attr("fill", "#66ff66")  // Change color
             .attr("r", 2);  // Change radius
         });
 
@@ -242,63 +290,6 @@ function update() {
        .call(yAxis);
 }
 
-var testy = 0;
 
-/*setInterval(function(){
-    console.log("time to update");
-    dataset.push([testy,12]);
-    testy++;
-    update();
-}, 1000); */
 
-//===========================D3 BAR GRAPH=======================================================
 
-/*createBarChart(dataArr, dataset2);
-
-function createBarChart(dataset1, dataset2){
-
-var dataset = [dataset1[dataset1.length - 1], dataset2[dataset2.length - 1]];
-    //Width and height
-    var w = 500;
-    var h = 1050;
-    var barPadding = 1; 
-    //Create SVG element
-    var svg = d3.select("body")
-            .append("svg")
-            .attr("width", w)
-            .attr("height", h);
-
-    //make bars for bar graph
-    svg.selectAll("rect")
-        .data(dataset)
-        .enter()
-        .append("rect")
-        .attr("x", function(d, i) {
-            return i * (w/dataset.length - barPadding);  //Bar width of 20 plus 1 for padding
-        })
-        .attr("y", function(d) {
-            return h - d;  //Height minus data value
-        })
-        .attr("width", 20)
-        .attr("height", function(d) {
-            return d;
-        })
-        .attr("fill", function(d) {
-            return "rgb(0, 0, " + (d * 10) + ")";
-        });
-    //label each bar with its value
-    svg.selectAll("text")
-        .data(dataset)
-        .enter()
-        .append("text")
-        .text(function(d) {
-            return d;
-        })
-        .attr("x", function(d, i) {
-            return i * (w / dataset.length) + (w / dataset.length - barPadding) / 2;
-        })
-        .attr("y", function(d) {
-            return h - (d - 3);
-        })
-        .attr("text-anchor", "middle");
-}*/
