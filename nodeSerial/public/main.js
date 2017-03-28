@@ -156,7 +156,7 @@ var padding = 30;  // for chart edges
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic
-        .domain([0, 10])
+        .domain([-5, 5])
         .range([padding, canvas_width - padding * 2]); // output range
 
 var yScale = d3.scale.linear()  // yScale is height of graphic
@@ -182,11 +182,6 @@ var svg = d3.select("h3")  // This is where we put our vis
     .append("svg")
     .attr("width", canvas_width)
     .attr("height", canvas_height)
-
-//tooltip - display coordinate on hover
-var tooltip = d3.select("body").append("div")   
-    .attr("class", "tooltip")               
-    .style("opacity", 0);
 
 // Create Circles
 svg.selectAll("circle")
@@ -228,7 +223,7 @@ svg.append("g")
 
 function update() {
     // Update scale domains
-    xScale.domain([0, 10]);
+    xScale.domain([-5, 5]);
 
     yScale.domain([0, d3.max(dataset, function(d) {
         return d[1]; 
