@@ -60,7 +60,6 @@ function toggle(){
 
 //dropdowns
 function changeMode(mode){
-    //console.log(dirDiff);
     var hashCode;
     if (mode == "haptic"){
         console.log("sending haptic");
@@ -100,54 +99,76 @@ function drawLine(fromx, tox, fromy, toy){
 }
 
 //=============MATH FOR CALCULATING POSITION==========================================
+var thetaL = 55;
+var thetaR = 50;
+var arm = 8;
+var B = 16.9;
+var originx = 0;
+var originy = 0;
+
+
 function getCoords(rightReading, leftReading){
     console.log("rightReading: " + rightReading + " leftReading: " + leftReading);
     var point = [];
-    var qr = calculate_qr(rightReading);
-    var ql = calculate_ql(leftReading);
-    var x = direct_kin_x(ql,qr);
-    var y = direct_kin_y(ql,qr);
-    console.log(y);
-    point = [x,y];
+    var ql = calcQ(leftReading);
+    var qr = calcQ(rightReading);
+    var pl = calcPl(ql);
+    var pr = calcPr(qr);
+    var point = dKin(pl,pr);
+    //point = [x,y];
     return point;
 }
 
-function calculate_ql(L_reading)
+function calcQ(potReading)
 {
-  var q1 =  -(((867 - L_reading) / 34) + 3);
-  console.log("q1: " + q1);
-  return q1;
+  if(potReading <= 786){
+    q = 0.8 - ((786-potReading)/240);
+  }
+  else if(potReading <= 827){
+    q = 1.5 - ((827-potReading)/82);
+  }
+  else{
+    q = 5.5 - ((939-potReading)/38);
+  }
+  return q;
 }
 
-function calculate_qr(R_reading)
-{
-  var q2 = ((875 - R_reading) / 32) + 3;
-  console.log("q2: " + q2);
-  return q2;
+function calcPl(ql){
+    var pl = [ql*Math.cos(thetaL), ql*Math.sin(thetaL)];
+    console.log("pl: " + pl);
+    return pl;
 }
 
-function direct_kin_x (q1, q2){
-    var x = 0;
-    x = (q1 + q2) / 2;
+function calcPr(qr){
+    var pr = [B - qr*Math.cos(thetaR), qr*Math.sin(thetaR)];
+    console.log("pr: " + pr);
+    return pr;
+}
+
+function dKin(pl,pr){
+    var p3 = [pl[0] - pr[0], pl[1] - pr[1]];
+    var mag = Math.sqrt(Math.pow(p3[0],2) + Math.pow(p3[1],2));
+    var u = [p3[0]/mag, p3[1]/mag];
+    var uTran = [-p3[1], p3[0]];
+    var halfBase = (pr[0] - pl[0])/2;
+    var l = Math.sqrt(Math.pow(arm,2) + Math.pow(halfBase, 2));
+    var p = [l*uTran[0], l*uTran[1]];
+    p = [(p[0]+pl[0]+halfBase) , (p[1]+pl[1]+halfBase)];
+    return p;
+}
+
+
+/*function direct_kin_x (ql, qr){
+    var x = originx + ql*Math.cos(thetaL) + qr*Math.cos(thetaR);
     return x;    
  }
 
-function direct_kin_y (q1, q2){
-    var L = 8; //length of arm
-    var y = 0, delta_q = 0;
-    delta_q = (Math.abs(q1 - q2) / 2);
-    var a = Math.pow(L,2);
-    var b = Math.pow(delta_q,2);
-    var diff = a - b; //comes out neg when it shouldn't
-    console.log("diff= " + diff);
-    y = Math.sqrt(Math.pow(L,2) - Math.pow(delta_q,2)); //this is messing up
-    console.log("y: " + y);
+function direct_kin_y (ql, qr){
+    var y = originy + ql*Math.sin(thetaL) + qr*Math.sin(thetaR);
     return y;
- }
+ }*/
 
 //==========================D3 scatter plot========================================================
-/*var dataset = [ [5, 10], [13, 19], [21, 25], [22, 18], [15, 13],
-                [11, 12], [15, 20], [18, 17], [16, 18], [23, 25] ];*/
 
 // Setup settings for graphic
 var canvas_width = 500;
@@ -156,13 +177,11 @@ var padding = 30;  // for chart edges
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic
-        .domain([-5, 5])
+        .domain([-200, 200])
         .range([padding, canvas_width - padding * 2]); // output range
 
 var yScale = d3.scale.linear()  // yScale is height of graphic
-        .domain([0, d3.max(dataset, function(d) {
-            return d[1];  // input domain
-        })])
+        .domain([-200,200])
         .range([canvas_height - padding, padding]);  // remember y starts on top going down so we flip
 
 // Define X axis
@@ -223,11 +242,9 @@ svg.append("g")
 
 function update() {
     // Update scale domains
-    xScale.domain([-5, 5]);
+    xScale.domain([-200, 200]);
 
-    yScale.domain([0, d3.max(dataset, function(d) {
-        return d[1]; 
-    })]);
+    yScale.domain([-200,200]);
 
     //render newly added elements of array
     var dataSelection = svg.selectAll("circle")
