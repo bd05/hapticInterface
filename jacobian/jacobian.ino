@@ -5,7 +5,7 @@
 #define THETAL 55
 #define THETAR 50
 #define ARM 8
-#define B 16.9
+#define B 24.5
 
 
 //Define Pins
@@ -13,8 +13,8 @@ int L1_motor_pin = 5;
 int L2_motor_pin = 6;
 int R1_motor_pin = 10;
 int R2_motor_pin = 11;
-int L_pot_pin = A0;
-int R_pot_pin = A1;
+int L_pot_pin = A1;
+int R_pot_pin = A0;
 
 
 //Variables
@@ -61,8 +61,8 @@ void loop(){
     delay(20000);
   }
   
-  L_reading = analogRead(A0);
-  R_reading = analogRead(A1);
+  L_reading = analogRead(L_pot_pin);
+  R_reading = analogRead(R_pot_pin);
   ql = abs(calculate_q(L_reading));
   qr = abs(calculate_q(R_reading));
   plx = calculate_plx(ql);
@@ -113,7 +113,9 @@ float calculate_ply(float ql){
 }
 
 float calculate_prx(float qr){
-  float prx = (float)16.9 - (qr*(0.64278760969));//cos(thetaR)
+  float prx = (float)B - (qr*(0.64278760969));//cos(thetaR)
+  //Serial.print("prx is ");
+  //Serial.println(prx, DEC);
   return prx;
 }
 
@@ -125,48 +127,28 @@ float calculate_pry(float qr){
 float direct_kin_x (float plx, float ply,float prx,float pry){
   float p3x = prx - plx;
   float p3y = pry - ply;
-  float magnitude = abs(sqrt(square(p3x) + square(p3y)));
-  float ux = p3x/magnitude;
-  float uy = p3y/magnitude;
+  float mag = abs(sqrt(square(p3x) + square(p3y)));
+  float ux = p3x/mag;
+  float uy = p3y/mag;
   float u_tran_x = -uy;
   float u_tran_y = ux; 
-  float half_base;
-   
-  if(pry > ply){
-    half_base = sqrt(square(prx-plx) + square(pry-ply))/2; //changed this math from assuming triangle was upright
-  }
-  else{
-    half_base = sqrt(square(prx-plx) + square(ply-pry))/2;//changed this math from assuming triangle was upright
-  }
-  float l = sqrt(square(ARM) + square(half_base));
-  float x = l*u_tran_x + plx + half_base;
+  float half_basex = ux*(mag/2) + plx;
+  float l = sqrt(square(ARM) + square(mag/2));
+  float x = l*u_tran_x + half_basex;
   return x;
 }
 
 float direct_kin_y (float plx,float ply,float prx,float pry){
   float p3x = prx - plx;
   float p3y = pry - ply;
-  float magnitude = abs(sqrt(square(p3x) + square(p3y)));
-  float ux = p3x/magnitude;
-  float uy = p3y/magnitude;
+  float mag = abs(sqrt(square(p3x) + square(p3y)));
+  float ux = p3x/mag;
+  float uy = p3y/mag;
   float u_tran_x = -uy;
-  float u_tran_y = ux;  
-  float half_base;
-
-   /*Serial.print("p3x is ");
-  Serial.print(p3x, DEC);
-  Serial.print("    ");
-  Serial.print("p3y is ");
-  Serial.println(p3y, DEC); */
-  
-  if(pry > ply){
-    half_base = sqrt(square(prx-plx) + square(pry-ply))/2; //changed this math from assuming triangle was upright
-  }
-  else{
-    half_base = sqrt(square(prx-plx) + square(ply-pry))/2;//changed this math from assuming triangle was upright
-  }
-  float l = sqrt(square(ARM) + square(half_base));
-  float y = l*u_tran_y + ply + half_base;
+  float u_tran_y = ux; 
+  float half_basey = uy*(mag/2) + ply;
+  float l = sqrt(square(ARM) + square(mag/2));
+  float y = l*u_tran_y + half_basey;
   return y;
  }
 
