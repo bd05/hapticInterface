@@ -168,7 +168,7 @@ var padding = 30;  // for chart edges
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic
-        .domain([10, 20])
+        .domain([5, 20])
         .range([padding, canvas_width - padding * 2]); // output range
 
 var yScale = d3.scale.linear()  // yScale is height of graphic
@@ -233,9 +233,9 @@ svg.append("g")
 
 function update() {
     // Update scale domains
-    xScale.domain([5, 23]);
+    xScale.domain([5, 20]);
 
-    yScale.domain([5,23]);
+    yScale.domain([10,20]);
 
     //render newly added elements of array
     var dataSelection = svg.selectAll("circle")

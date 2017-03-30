@@ -1,10 +1,12 @@
 #include <math.h> 
 
+
 //Define Constant
 #define THETAL 55
 #define THETAR 50
 #define ARM 8
 #define B 16.9
+
 
 //Define Pins
 int L1_motor_pin = 5;
@@ -13,8 +15,6 @@ int R1_motor_pin = 10;
 int R2_motor_pin = 11;
 int L_pot_pin = A0;
 int R_pot_pin = A1;
-
-
 
 
 //Variables
@@ -63,18 +63,26 @@ void loop(){
   
   L_reading = analogRead(A0);
   R_reading = analogRead(A1);
-  ql = calculate_q(L_reading);
-  qr = calculate_q(R_reading);
-  plx = calculat_plx(ql);
+  ql = abs(calculate_q(L_reading));
+  qr = abs(calculate_q(R_reading));
+  plx = calculate_plx(ql);
   ply = calculate_ply(ql);
   prx = calculate_prx(qr);
   pry = calculate_pry(qr);
   x = direct_kin_x(plx,ply,prx,pry);
   y = direct_kin_y(plx,ply,prx,pry);
-  
-  Serial.println("x: %.6f", x);
-  Serial.println("y: %.6f", y);
 
+  Serial.print("x is ");
+  Serial.print(x, DEC);
+  Serial.print("    ");
+  Serial.print("y is ");
+  Serial.println(y, DEC); 
+
+
+
+
+
+  delay(500);
   //check_walls();
 }
 
@@ -83,69 +91,79 @@ float calculate_q(int potReading)
   float q;
   
   if(potReading <= 786){
-    q = 0.8 - ((786-potReading)/240);
+    q = 0.8 - (((float)786-potReading)/240);
   }
   else if(potReading <= 827){
-    q = 1.5 - ((827-potReading)/82);
+    q = 1.5 - (((float)827-potReading)/82);
   }
   else{
-    q = 5.5 - ((939-potReading)/38);
+    q = 5.5 - (((float)939-potReading)/38);
   }
   return q;
 }
 
 float calculate_plx(float ql){
-  float plx = ql*cos(THETAL);
+  float plx = ql*(0.5735764364); //cos(thetaL)
   return plx;
 }
 
 float calculate_ply(float ql){
-  float ply = ql*sin(THETAL);
+  float ply = ql*(0.819152044);//sin(thetaL)
   return ply;
 }
 
 float calculate_prx(float qr){
-  float prx = qr*cos(THETAR);
+  float prx = (float)16.9 - (qr*(0.64278760969));//cos(thetaR)
   return prx;
 }
 
 float calculate_pry(float qr){
-  float pry = qr*sin(THETAR);
+  float pry = qr*(0.76604444312);//sin(thetaR)
   return pry;
 }
 
-float direct_kin_x (plx,ply,prx,pry){
-  float p3x = plx - prx;
-  float p3y = ply - pry;
-  float magnitude = sqrt(square(p3x) + square(p3y));
+float direct_kin_x (float plx, float ply,float prx,float pry){
+  float p3x = prx - plx;
+  float p3y = pry - ply;
+  float magnitude = abs(sqrt(square(p3x) + square(p3y)));
   float ux = p3x/magnitude;
   float uy = p3y/magnitude;
   float u_tran_x = -uy;
-  float u_tran_y = ux;  
+  float u_tran_y = ux; 
+  float half_base;
+   
   if(pry > ply){
-    float half_base = sqrt(square(prx-plx) + square(pry-ply))/2; //changed this math from assuming triangle was upright
+    half_base = sqrt(square(prx-plx) + square(pry-ply))/2; //changed this math from assuming triangle was upright
   }
   else{
-    float half_base = sqrt(square(prx-plx) + square(ply-pry))/2;//changed this math from assuming triangle was upright
+    half_base = sqrt(square(prx-plx) + square(ply-pry))/2;//changed this math from assuming triangle was upright
   }
   float l = sqrt(square(ARM) + square(half_base));
   float x = l*u_tran_x + plx + half_base;
   return x;
 }
 
-float direct_kin_y (plx,ply,prx,pry){
-  float p3x = plx - prx;
-  float p3y = ply - pry;
-  float magnitude = sqrt(square(p3x) + square(p3y));
+float direct_kin_y (float plx,float ply,float prx,float pry){
+  float p3x = prx - plx;
+  float p3y = pry - ply;
+  float magnitude = abs(sqrt(square(p3x) + square(p3y)));
   float ux = p3x/magnitude;
   float uy = p3y/magnitude;
   float u_tran_x = -uy;
   float u_tran_y = ux;  
+  float half_base;
+
+   /*Serial.print("p3x is ");
+  Serial.print(p3x, DEC);
+  Serial.print("    ");
+  Serial.print("p3y is ");
+  Serial.println(p3y, DEC); */
+  
   if(pry > ply){
-    float half_base = sqrt(square(prx-plx) + square(pry-ply))/2; //changed this math from assuming triangle was upright
+    half_base = sqrt(square(prx-plx) + square(pry-ply))/2; //changed this math from assuming triangle was upright
   }
   else{
-    float half_base = sqrt(square(prx-plx) + square(ply-pry))/2;//changed this math from assuming triangle was upright
+    half_base = sqrt(square(prx-plx) + square(ply-pry))/2;//changed this math from assuming triangle was upright
   }
   float l = sqrt(square(ARM) + square(half_base));
   float y = l*u_tran_y + ply + half_base;
@@ -158,14 +176,14 @@ float direct_kin_y (plx,ply,prx,pry){
 
 void check_walls()
 {
-  if (x_a >= 0.8)
+  if (x >= 0.8)
   {
     pwm_right = 50;
     in_motor_right(pwm_right);
     off_motor_left();
   }
   
-  else if (x_a <= -0.8)
+  else if (x <= -0.8)
   {
     pwm_left = 50;
     in_motor_left(pwm_left);
@@ -234,8 +252,8 @@ void do_prescribe_path() {
   int pp_pwm_left = 0; 
   int pp_pwm_right = 0;
 
-  q1_curr = calculate_q1(analogRead(L_pot_pin));
-  q2_curr = calculate_q2(analogRead(R_pot_pin));
+  //q1_curr = calculate_q1(analogRead(L_pot_pin));
+  //q2_curr = calculate_q2(analogRead(R_pot_pin));
 
  /* x_next = 1;
   y_next = 6.8;
@@ -294,8 +312,8 @@ void do_prescribe_path() {
       off_motor_left();
     }
     
-     q1_curr = calculate_q1(analogRead(L_pot_pin));
-     q2_curr = calculate_q2(analogRead(R_pot_pin));
+//     q1_curr = calculate_q1(analogRead(L_pot_pin));
+  //   q2_curr = calculate_q2(analogRead(R_pot_pin));
 
      //flags setting, if one of them is done, don't ever change it again
      q1_done = (abs(q1_curr - q1_next) < 0.4) ? 1 : 0;
@@ -316,8 +334,8 @@ void do_prescribe_path() {
   q1_done = 0;
   q2_done = 0;
   
-  q1_curr = calculate_q1(analogRead(L_pot_pin));
-  q2_curr = calculate_q2(analogRead(R_pot_pin));
+//  q1_curr = calculate_q1(analogRead(L_pot_pin));
+ // q2_curr = calculate_q2(analogRead(R_pot_pin));
   q1_next = -4.23;
   q2_next = q2_curr;
 
@@ -355,8 +373,8 @@ void do_prescribe_path() {
     }
     
  
-  q1_curr = calculate_q1(analogRead(L_pot_pin));
-  q2_curr = calculate_q2(analogRead(R_pot_pin));
+//  q1_curr = calculate_q1(analogRead(L_pot_pin));
+ // q2_curr = calculate_q2(analogRead(R_pot_pin));
      //flags setting, if one of them is done, don't ever change it again
      q1_done = (abs(q1_curr - q1_next) < 0.4) ? 1 : 0;
      q2_done = (abs(q2_curr - q2_next) < 0.4) ? 1 : 0;
