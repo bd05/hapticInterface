@@ -35,7 +35,7 @@ socket.on('updatePot', function(data){
         unParsedData = ""; //reset string that receives data
         //math transforms:
         point = getCoords(rightReading,leftReading);
-        console.log(point);
+        //console.log("point: " + point);
         dataset.push(point);
         update(); //update d3 scatterplot
     }
@@ -45,7 +45,6 @@ socket.on('updatePot', function(data){
         document.getElementById("lPotVal").textContent = leftReading;
         unParsedData = "";
         point = getCoords(rightReading,leftReading);
-        //console.log(point);
         dataset.push(point);
         update(); //update d3 scatterplot
     }
@@ -99,23 +98,27 @@ function drawLine(fromx, tox, fromy, toy){
 }
 
 //=============MATH FOR CALCULATING POSITION==========================================
-var thetaL = 55;
-var thetaR = 50;
+var cosThetaL = 0.5735764; //cos(55)
+var cosThetaR = 0.6427876; //cos(50)
+var sinThetaL = 0.8191520; //sin(55)
+var sinThetaR = 0.7660444; //sin(50)
 var arm = 8;
-var B = 16.9;
-var originx = 0;
-var originy = 0;
+var B = 24.5;
 
 
 function getCoords(rightReading, leftReading){
     console.log("rightReading: " + rightReading + " leftReading: " + leftReading);
     var point = [];
-    var ql = calcQ(leftReading);
-    var qr = calcQ(rightReading);
+    var ql = Math.abs(calcQ(leftReading));
+    var qr = Math.abs(calcQ(rightReading));
+    console.log("ql: " + ql);
+    console.log("qr: " + qr);
     var pl = calcPl(ql);
     var pr = calcPr(qr);
-    var point = dKin(pl,pr);
-    //point = [x,y];
+    console.log("pl: " + pl);
+    console.log("pr: " + pr);
+    point = dKin(pl,pr);
+    console.log("point: " + point);
     return point;
 }
 
@@ -134,39 +137,27 @@ function calcQ(potReading)
 }
 
 function calcPl(ql){
-    var pl = [ql*Math.cos(thetaL), ql*Math.sin(thetaL)];
-    console.log("pl: " + pl);
+    var pl = [ql*cosThetaL, ql*sinThetaL]; 
     return pl;
 }
 
 function calcPr(qr){
-    var pr = [B - qr*Math.cos(thetaR), qr*Math.sin(thetaR)];
-    console.log("pr: " + pr);
+    var pr = [B - qr*cosThetaR, qr*sinThetaR];
     return pr;
 }
 
-function dKin(pl,pr){
-    var p3 = [pl[0] - pr[0], pl[1] - pr[1]];
+function dKin(pl,pr){ 
+    var p3 = [pr[0] - pl[0], pr[1] - pl[1]];
     var mag = Math.sqrt(Math.pow(p3[0],2) + Math.pow(p3[1],2));
     var u = [p3[0]/mag, p3[1]/mag];
-    var uTran = [-p3[1], p3[0]];
-    var halfBase = (pr[0] - pl[0])/2;
-    var l = Math.sqrt(Math.pow(arm,2) + Math.pow(halfBase, 2));
-    var p = [l*uTran[0], l*uTran[1]];
-    p = [(p[0]+pl[0]+halfBase) , (p[1]+pl[1]+halfBase)];
+    console.log("unit vec: " + u);
+    var uTran = [-u[1], u[0]];
+    var halfBase = [(u[0]*(mag/2)+ pl[0]),(u[1]*(mag/2)+pl[1])];
+    var l = Math.sqrt(Math.pow(arm,2) + Math.pow((mag/2), 2));
+    var p = [l*uTran[0] + halfBase[0], l*uTran[1] + halfBase[1]];
     return p;
 }
 
-
-/*function direct_kin_x (ql, qr){
-    var x = originx + ql*Math.cos(thetaL) + qr*Math.cos(thetaR);
-    return x;    
- }
-
-function direct_kin_y (ql, qr){
-    var y = originy + ql*Math.sin(thetaL) + qr*Math.sin(thetaR);
-    return y;
- }*/
 
 //==========================D3 scatter plot========================================================
 
@@ -177,11 +168,11 @@ var padding = 30;  // for chart edges
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic
-        .domain([-200, 200])
+        .domain([10, 20])
         .range([padding, canvas_width - padding * 2]); // output range
 
 var yScale = d3.scale.linear()  // yScale is height of graphic
-        .domain([-200,200])
+        .domain([10,20])
         .range([canvas_height - padding, padding]);  // remember y starts on top going down so we flip
 
 // Define X axis
@@ -216,7 +207,7 @@ svg.selectAll("circle")
     .attr("r", 2)
     .on("mouseover", function(d) {      
             tooltip.transition()        
-                .duration(200)      
+                .duration(50)      
                 .style("opacity", .9);      
             div .html(xScale(d[0]) + "<br/>"  + yScale(d[1]))  
                 .style("left", (d3.event.pageX) + "px")     
@@ -224,7 +215,7 @@ svg.selectAll("circle")
             })                  
         .on("mouseout", function(d) {       
             tooltip.transition()        
-                .duration(500)      
+                .duration(50)      
                 .style("opacity", 0);   
         });  // radius
 
@@ -242,9 +233,9 @@ svg.append("g")
 
 function update() {
     // Update scale domains
-    xScale.domain([-200, 200]);
+    xScale.domain([5, 23]);
 
-    yScale.domain([-200,200]);
+    yScale.domain([5,23]);
 
     //render newly added elements of array
     var dataSelection = svg.selectAll("circle")

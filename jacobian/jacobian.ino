@@ -1,5 +1,11 @@
 #include <math.h> 
 
+//Define Constant
+#define THETAL 55
+#define THETAR 50
+#define ARM 8
+#define B 16.9
+
 //Define Pins
 int L1_motor_pin = 5;
 int L2_motor_pin = 6;
@@ -8,14 +14,19 @@ int R2_motor_pin = 11;
 int L_pot_pin = A0;
 int R_pot_pin = A1;
 
-//Define Constant
-float L   = 8; //length of arm
+
+
 
 //Variables
 //haptic
 int L_reading;
 int R_reading;
-float q1_a, q2_a, x_a, y_a;
+float ql,qr,x,y;
+float plx;
+float ply;
+float prx;
+float pry;
+
 volatile int pwm_left; //for the haptic logic, being changed in check_walls()
 volatile int pwm_right;
 
@@ -52,70 +63,96 @@ void loop(){
   
   L_reading = analogRead(A0);
   R_reading = analogRead(A1);
-  q1_a = calculate_q1(L_reading);
-  q2_a = calculate_q2(R_reading);
-  x_a = direct_kin_x(q1_a, q2_a);
-  y_a = direct_kin_y(q1_a, q2_a);
+  ql = calculate_q(L_reading);
+  qr = calculate_q(R_reading);
+  plx = calculat_plx(ql);
+  ply = calculate_ply(ql);
+  prx = calculate_prx(qr);
+  pry = calculate_pry(qr);
+  x = direct_kin_x(plx,ply,prx,pry);
+  y = direct_kin_y(plx,ply,prx,pry);
+  
+  Serial.println("x: %.6f", x);
+  Serial.println("y: %.6f", y);
 
-  Serial.print("q1_a is ");
-  Serial.print(q1_a, DEC);
-  Serial.print("q2_a is ");
-  Serial.println(q2_a, DEC);
-    
-  Serial.print("x_a is ");
-  Serial.print(x_a, DEC);
-  Serial.print("y_a is ");
-  Serial.println(y_a, DEC);
-
-  check_walls();
+  //check_walls();
 }
 
-float calculate_q1(int L_reading)
+float calculate_q(int potReading)
 {
-  float q1 =  -(((867 - ((float)L_reading)) / 34) + 3);
-
-  return q1;
+  float q;
+  
+  if(potReading <= 786){
+    q = 0.8 - ((786-potReading)/240);
+  }
+  else if(potReading <= 827){
+    q = 1.5 - ((827-potReading)/82);
+  }
+  else{
+    q = 5.5 - ((939-potReading)/38);
+  }
+  return q;
 }
 
-float calculate_q2(int R_reading)
-{
-  float q2 = ((875 - ((float)R_reading)) / 32) + 3;
-
-  return q2;
+float calculate_plx(float ql){
+  float plx = ql*cos(THETAL);
+  return plx;
 }
 
-float direct_kin_x (float q1, float q2){
-    float x = 0;
-    x = (q1 + q2) / 2;
-    return x;    
+float calculate_ply(float ql){
+  float ply = ql*sin(THETAL);
+  return ply;
+}
+
+float calculate_prx(float qr){
+  float prx = qr*cos(THETAR);
+  return prx;
+}
+
+float calculate_pry(float qr){
+  float pry = qr*sin(THETAR);
+  return pry;
+}
+
+float direct_kin_x (plx,ply,prx,pry){
+  float p3x = plx - prx;
+  float p3y = ply - pry;
+  float magnitude = sqrt(square(p3x) + square(p3y));
+  float ux = p3x/magnitude;
+  float uy = p3y/magnitude;
+  float u_tran_x = -uy;
+  float u_tran_y = ux;  
+  if(pry > ply){
+    float half_base = sqrt(square(prx-plx) + square(pry-ply))/2; //changed this math from assuming triangle was upright
+  }
+  else{
+    float half_base = sqrt(square(prx-plx) + square(ply-pry))/2;//changed this math from assuming triangle was upright
+  }
+  float l = sqrt(square(ARM) + square(half_base));
+  float x = l*u_tran_x + plx + half_base;
+  return x;
+}
+
+float direct_kin_y (plx,ply,prx,pry){
+  float p3x = plx - prx;
+  float p3y = ply - pry;
+  float magnitude = sqrt(square(p3x) + square(p3y));
+  float ux = p3x/magnitude;
+  float uy = p3y/magnitude;
+  float u_tran_x = -uy;
+  float u_tran_y = ux;  
+  if(pry > ply){
+    float half_base = sqrt(square(prx-plx) + square(pry-ply))/2; //changed this math from assuming triangle was upright
+  }
+  else{
+    float half_base = sqrt(square(prx-plx) + square(ply-pry))/2;//changed this math from assuming triangle was upright
+  }
+  float l = sqrt(square(ARM) + square(half_base));
+  float y = l*u_tran_y + ply + half_base;
+  return y;
  }
 
-float direct_kin_y (float q1, float q2){
-    float y = 0, delta_q = 0;
-    delta_q = (abs(q1 - q2) / 2);
-    y = sqrt(square(L) - square(delta_q));
 
-    return y;
- }
-
- 
-float inverse_kin_q1 (float x, float y){
-    float q1 = 0, delta_q = 0;
-    
-    delta_q = sqrt(square(L) - square(y));
-    q1 = x - delta_q;
-
-    return q1;
- }
-
-float inverse_kin_q2 (float x, float y){
-    float q2 = 0, delta_q = 0;
-    
-    delta_q = sqrt(square(L) - square(y));
-    q2 = x + delta_q;
-
-    return q2;
- }
  
 
 
