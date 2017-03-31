@@ -5,6 +5,7 @@ window.onload=function(){
     toggleLEDBtn.addEventListener("click", toggle);
     var rPotVal = document.getElementById("rPotVal");
     var lPotVal = document.getElementById("lPotVal");
+    var pointVal = document.getElementById("pointVal");
 }
 
 var LEDStatus = 0;
@@ -12,7 +13,8 @@ var dataset = [];
 var unParsedData = "";
 var rightReading = "";
 var leftReading = "";
-var prevRReading;
+var prevx;
+var prevy;
 var qr; //q2_a in arduino code
 var ql; //q1_a in arduino code
 var x_a;
@@ -21,6 +23,7 @@ var point;
 var canvas = document.getElementById("whiteboard");
 var ctx = canvas.getContext('2d');
 ctx.strokeStyle = 'rgba(63, 116, 191, 0.05)';
+ctx.scale(3, 3);
 
 //sockets
 socket.on('updatePot', function(data){
@@ -30,13 +33,16 @@ socket.on('updatePot', function(data){
         rightReading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
         document.getElementById("rPotVal").textContent = rightReading;
         //dataset.push([rightReading,leftReading]); 
-        drawLine(prevRReading, rightReading, 50, 50); //hard coded in y-coordinates for canvas drawings for now
-        prevRReading = rightReading;
         unParsedData = ""; //reset string that receives data
         //math transforms:
         point = getCoords(rightReading,leftReading);
         //console.log("point: " + point);
         dataset.push(point);
+        document.getElementById("pointVal").textContent = point;
+        //draw on whiteboard
+        drawLine(prevx, point[0], prevy, point[1]); 
+        prevx = point[0]; 
+        //end draw on whiteboard
         update(); //update d3 scatterplot
     }
     //left potentiometer reading
@@ -46,6 +52,11 @@ socket.on('updatePot', function(data){
         unParsedData = "";
         point = getCoords(rightReading,leftReading);
         dataset.push(point);
+        document.getElementById("pointVal").textContent = point;
+        //draw on whiteboard
+        drawLine(prevx, point[0], prevy, point[1]); 
+        prevy = point[1]; 
+        //end draw on whiteboard
         update(); //update d3 scatterplot
     }
 });
@@ -90,8 +101,11 @@ function changeShape(shape){
 
 //canvas drawing
 function drawLine(fromx, tox, fromy, toy){
+        console.log("fromx: " + fromx + "fromy: " + fromy + "tox: " + tox + "toy: " + toy);
         fromx = parseInt(fromx);
         tox = parseInt(tox);
+        fromy = parseInt(fromy);
+        toy = parseInt(toy);
         ctx.moveTo(fromx, fromy);
         ctx.lineTo(tox, toy);
         ctx.stroke();
@@ -165,27 +179,31 @@ function dKin(pl,pr){
 var canvas_width = 500;
 var canvas_height = 300;
 var padding = 30;  // for chart edges
+var xmin = 6;
+var ymin = 13;
+var xmax = 20;
+var ymax = 18;
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic
-        .domain([5, 20])
+        .domain([xmin, xmax])
         .range([padding, canvas_width - padding * 2]); // output range
 
 var yScale = d3.scale.linear()  // yScale is height of graphic
-        .domain([10,20])
+        .domain([ymin,ymax])
         .range([canvas_height - padding, padding]);  // remember y starts on top going down so we flip
 
 // Define X axis
 var xAxis = d3.svg.axis()
     .scale(xScale)
     .orient("bottom")
-    .ticks(5);
+    .ticks(10);
 
 // Define Y axis
 var yAxis = d3.svg.axis()
     .scale(yScale)
     .orient("left")
-    .ticks(5);
+    .ticks(10);
 
 // Create SVG element
 var svg = d3.select("h3")  // This is where we put our vis
@@ -233,9 +251,9 @@ svg.append("g")
 
 function update() {
     // Update scale domains
-    xScale.domain([5, 20]);
+    xScale.domain([xmin, xmax]);
 
-    yScale.domain([10,20]);
+    yScale.domain([ymin,ymax]);
 
     //render newly added elements of array
     var dataSelection = svg.selectAll("circle")

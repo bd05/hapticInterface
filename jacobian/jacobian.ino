@@ -26,6 +26,7 @@ float plx;
 float ply;
 float prx;
 float pry;
+float current_time;
 
 volatile int pwm_left; //for the haptic logic, being changed in check_walls()
 volatile int pwm_right;
@@ -45,22 +46,18 @@ void setup() {
   pinMode (L2_motor_pin, OUTPUT);  
   pinMode (R1_motor_pin, OUTPUT);
   pinMode (R2_motor_pin, OUTPUT);
-
   pinMode(7, INPUT_PULLUP);
-
 }
 
 void loop(){
-
 // prescribe_path = digitalRead(7);
-
- 
  if(prescribe_path == 0)
   {
     do_prescribe_path();
     delay(20000);
   }
   
+  current_time = millis();
   L_reading = analogRead(L_pot_pin);
   R_reading = analogRead(R_pot_pin);
   ql = abs(calculate_q(L_reading));
@@ -71,21 +68,27 @@ void loop(){
   pry = calculate_pry(qr);
   x = direct_kin_x(plx,ply,prx,pry);
   y = direct_kin_y(plx,ply,prx,pry);
+  
 
-  Serial.print("x is ");
+  //print x and y to arduino serial monitor
+  /*Serial.print("x is ");
   Serial.print(x, DEC);
   Serial.print("    ");
   Serial.print("y is ");
-  Serial.println(y, DEC); 
-
-
-
-
-
-  delay(500);
-  //check_walls();
+  Serial.println(y, DEC); */
+  
+  //print x and y for web client to see
+  /*Serial.print("B"); // begin character 
+  Serial.print(R_reading);  
+  Serial.print("E"); // end character
+  Serial.print("C"); // begin character 
+  Serial.print(L_reading);  
+  Serial.print("F"); // end character */
+  
+  delay(50);
+  draw_line_haptic(current_time,x,y);
 }
-
+//===================================================DIRECT KINEMATICS MATH=============================================================================
 float calculate_q(int potReading)
 {
   float q;
@@ -152,30 +155,87 @@ float direct_kin_y (float plx,float ply,float prx,float pry){
   return y;
  }
 
-
+//================================================DRAW LINE=========================================================
+void draw_line_haptic(float last_time, float last_x, float last_y) //need to add d-control
+{ 
+  //recalc position
+  int current_time = millis();
+  L_reading = analogRead(L_pot_pin);
+  R_reading = analogRead(R_pot_pin);
+  ql = abs(calculate_q(L_reading));
+  qr = abs(calculate_q(R_reading));
+  plx = calculate_plx(ql);
+  ply = calculate_ply(ql);
+  prx = calculate_prx(qr);
+  pry = calculate_pry(qr);
+  x = direct_kin_x(plx,ply,prx,pry);
+  y = direct_kin_y(plx,ply,prx,pry);
+  
+  //settings
+  float upper_wall = 15.6;
+  float lower_wall = 15.3;
+  pwm_left = 50;
+  pwm_right = 50;
+  float pControl;
+  float dControl;
+  //in_motor_right(pwm_right);
+  //in_motor_left(pwm_left);
  
-
-
-void check_walls()
-{
-  if (x >= 0.8)
-  {
-    pwm_right = 50;
-    in_motor_right(pwm_right);
-    off_motor_left();
+  if (y >= upper_wall){
+    pControl = 50*(y - upper_wall);
+    dControl = 10*((y-last_y)/(current_time-last_time));
+    pwm_left = pControl + dControl; 
+    
+    if(pwm_left > 62){
+      pwm_left = 62;
+    }
+    pwm_right = pwm_left;
+    out_motor_left(pwm_left);
+    out_motor_right(pwm_right); 
+  
+    Serial.print("pControl: ");
+    Serial.println(pControl, DEC);
+    Serial.print("dControl: ");
+    Serial.println(dControl, DEC);  
   }
   
-  else if (x <= -0.8)
-  {
-    pwm_left = 50;
+  else if (y <= lower_wall){
+    pControl = 50*(upper_wall - y);
+    dControl = 10*((y-last_y)/(current_time-last_time));
+    pwm_left = pControl + dControl; 
+    
+    if(pwm_left > 62){
+      pwm_left = 62;
+    }
+    pwm_right = pwm_left;
     in_motor_left(pwm_left);
-     off_motor_right();    
+    in_motor_right(pwm_right);
+    
+    Serial.print("pControl: ");
+    Serial.println(pControl, DEC);
+    Serial.print("dControl: ");
+    Serial.println(dControl, DEC); 
   }
-  else
-  {
+  else{//within space to draw line
     off_motor_right();
     off_motor_left();
   }
+  
+  //rhombus
+ /* if ( y <= ((x/4)+11.5))
+  {
+    in_motor_right(pwm_right);
+    off_motor_left();  
+  }
+  else if ( y >= ((x/4)+13))
+  {
+    in_motor_left(pwm_left);
+    off_motor_right();  
+  }
+  else{
+    off_motor_right();
+    off_motor_left();
+  }*/
   
   return;
 }
@@ -367,7 +427,7 @@ void do_prescribe_path() {
  
   }
 
-     Serial.print("q1_curr is ");
+  Serial.print("q1_curr is ");
   Serial.print(q1_curr, DEC);
   Serial.print("q2_curr is ");
   Serial.println(q2_curr, DEC);
