@@ -1,7 +1,6 @@
  //Testing the DC Motors
 //Define Pins
  //Motor A
- int enableA = 10;
  int pinA1 = 5;
  int pinA2 = 6;
 int pwm = 50;
@@ -9,7 +8,6 @@ int pwm = 50;
 void setup() {
 Serial.begin (9600);
  //configure pin modes
- pinMode (enableA, OUTPUT);
  pinMode (pinA1, OUTPUT);
  pinMode (pinA2, OUTPUT);
 }
