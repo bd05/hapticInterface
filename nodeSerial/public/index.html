@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+      <title>ELEC 391</title>
+        <link rel="shortcut icon" href=""> <!--just to get rid of favicon error-->
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    </head>
+    <body>
+        <div class="container">
+          <div class="directions-container">
+            <div class="direction"> 
+              <h4>Mode</h4>
+              <select onchange="changeMode(this.value)">
+                <option value="haptic">Haptic</option>
+                <option value="autonomous">Autonomous</option>
+              </select>
+            </div>
+
+            <div class="direction"> 
+              <h4>Shape</h4>
+              <select onchange="changeShape(this.value)">
+                <option value="line">Line</option>
+                <option value="circle">Circle</option>
+                <option value="fig-eight">Figure Eight</option>
+              </select>
+            </div>
+          </div>
+        <button id="toggleLED" type="button" class="btn btn-success">toggle LED</button>
+        </div>
+        <div class="container">
+          <span id="rPotVal"></span>
+          <br>
+          <span id="lPotVal"></span>
+          <br>
+          <p>[x,y]: </p>
+          <span id="pointVal"></span>
+          <br>
+          <canvas id="whiteboard" width="200" height="200"></canvas>
+        </div>
+        <div class="container">
+            <h3></h3>
+        </div>
+        <div class="container">
+            <div id="potBarGraph"></div>
+        </div>
+    <!-- javascript files -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src='/socket.io/socket.io.js'></script>
+    <script type="text/javascript" src="d3/d3.v3.js"></script>
+    <script type="text/javascript" src="main.js"></script>
+    </body>
+</html>
