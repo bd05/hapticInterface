@@ -32,30 +32,32 @@ socket.on('updatePot', function(data){
     if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
         rightReading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
         document.getElementById("rPotVal").textContent = rightReading;
-        //dataset.push([rightReading,leftReading]); 
+        console.log("x: " + rightReading);
+        dataset.push([rightReading,leftReading]); 
         unParsedData = ""; //reset string that receives data
         //math transforms:
-        point = getCoords(rightReading,leftReading);
-        //console.log("point: " + point);
+        /*point = getCoords(rightReading,leftReading);
         dataset.push(point);
         document.getElementById("pointVal").textContent = point;
         //draw on whiteboard
         drawLine(prevx, point[0], prevy, point[1]); 
-        prevx = point[0]; 
+        prevx = point[0]; */
         //end draw on whiteboard
         update(); //update d3 scatterplot
     }
     //left potentiometer reading
     if(unParsedData.charAt(0) === "C" && unParsedData.slice(-1) === "F"){
         leftReading = unParsedData.substring(unParsedData.indexOf('C') + 1, unParsedData.indexOf('F'));
+        console.log("y: " + leftReading);
         document.getElementById("lPotVal").textContent = leftReading;
         unParsedData = "";
-        point = getCoords(rightReading,leftReading);
+        dataset.push([rightReading,leftReading]);
+       /* point = getCoords(rightReading,leftReading);
         dataset.push(point);
         document.getElementById("pointVal").textContent = point;
         //draw on whiteboard
         drawLine(prevx, point[0], prevy, point[1]); 
-        prevy = point[1]; 
+        prevy = point[1]; */
         //end draw on whiteboard
         update(); //update d3 scatterplot
     }
@@ -180,9 +182,9 @@ var canvas_width = 500;
 var canvas_height = 300;
 var padding = 30;  // for chart edges
 var xmin = 6;
-var ymin = 13;
+var ymin = 15;
 var xmax = 20;
-var ymax = 18;
+var ymax = 20;
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic

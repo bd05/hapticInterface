@@ -26,12 +26,13 @@ void setup() {
   //initialize potentiometer for web client so D3 doesn't confused by NaN values
   sensorValue = analogRead(analogInPin); // Potmeter0
   sensorValue1 = analogRead(analogInPin1); //Potmeter1
-  Serial.print("B"); // begin character 
+ /* Serial.print("B"); // begin character 
   Serial.print(sensorValue);  
   Serial.print("E"); // end character
   Serial.print("C"); // begin character 
   Serial.print(sensorValue1);  
-  Serial.print("F"); // end character     
+  Serial.print("F"); // end character     */
+
 }
  
 void loop() {
@@ -59,18 +60,66 @@ void loop() {
      sensorValue1 = analogRead(analogInPin1); //Potmeter1
     // read the analog in value:
     if(abs(sensorValue - prevValue) >= 3){
-      Serial.print("B"); // begin character 
+      /*Serial.print("B"); // begin character 
       Serial.print(sensorValue);  
-      Serial.print("E"); // end character
+      Serial.print("E"); // end character*/
+      char beginR = 'B';
+      char endR = 'E';
+      char str[6];
+      if( sensorValue < 1000){
+        char sensorR[3];
+        itoa(sensorValue,sensorR,10);
+        sprintf(str, "%c%c%c%c%c", beginR, sensorR[0],sensorR[1],sensorR[2],endR);
+      }
+      else{
+        char sensorR[4];
+        itoa(sensorValue,sensorR,10);
+        sprintf(str, "%c%c%c%c%c%c", beginR, sensorR[0],sensorR[1],sensorR[2],sensorR[3],endR);
+      }
+      Serial.write(str);
+    
       prevValue = sensorValue;
     }  
 
     if(abs(sensorValue1 - prevValue1) >= 3){
-      Serial.print("C"); // begin character 
+      /*Serial.print("C"); // begin character 
       Serial.print(sensorValue1);  
-      Serial.print("F"); // end character
+      Serial.print("F"); // end character*/
+      char beginL = 'C';
+      char endL = 'F';
+      char str[6];
+      if( sensorValue < 1000){
+        char sensorL[3];
+        itoa(sensorValue1,sensorL,10);
+        sprintf(str, "%c%c%c%c%c", beginL, sensorL[0],sensorL[1],sensorL[2],endL);
+      }
+      else{
+        char sensorL[4];
+        itoa(sensorValue1,sensorL,10);
+        sprintf(str, "%c%c%c%c%c%c", beginL, sensorL[0],sensorL[1],sensorL[2],sensorL[3],endL);
+      }
+      Serial.write(str);
+      
       prevValue1 = sensorValue1;
     }  
+    
+  /*  int test = 4567;
+    char beginR = 'B';
+    char endR = 'E';
+    char str[6];
+    if( test < 1000){
+      char sensorR[3];
+      itoa(test,sensorR,10);
+      sprintf(str, "%c%c%c%c%c", beginR, sensorR[0],sensorR[1],sensorR[2],endR);
+    }
+    else{
+      char sensorR[3];
+      itoa(test,sensorR,10);
+      sprintf(str, "%c%c%c%c%c%c", beginR, sensorR[0],sensorR[1],sensorR[2],sensorR[3],endR);
+    }
+    Serial.write(str);*/
+    
+    
   delay(50); // give the Arduino some breathing room. 
 }
  

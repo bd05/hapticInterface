@@ -4,7 +4,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var SerialPort = require('serialport');
-var port = new SerialPort("COM5", {   //*change this to COM port arduino is on
+var port = new SerialPort("COM6", {   //*change this to COM port arduino is on
       baudrate: 9600,
       // defaults for Arduino serial communication
        dataBits: 8, 
