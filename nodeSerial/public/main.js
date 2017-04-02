@@ -28,8 +28,10 @@ ctx.scale(3, 3);
 //sockets
 socket.on('updatePot', function(data){
     unParsedData += data;
+    console.log("before if: " + unParsedData);
     //right potentiometer reading
     if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
+        console.log("in if x:" + unParsedData);
         rightReading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
         document.getElementById("rPotVal").textContent = rightReading;
         console.log("x: " + rightReading);
@@ -38,15 +40,16 @@ socket.on('updatePot', function(data){
         //math transforms:
         /*point = getCoords(rightReading,leftReading);
         dataset.push(point);
-        document.getElementById("pointVal").textContent = point;
+        document.getElementById("pointVal").textContent = point;*/
         //draw on whiteboard
-        drawLine(prevx, point[0], prevy, point[1]); 
-        prevx = point[0]; */
+        drawLine(prevx, rightReading, prevy, leftReading); 
+        prevx = rightReading; 
         //end draw on whiteboard
         update(); //update d3 scatterplot
     }
     //left potentiometer reading
     if(unParsedData.charAt(0) === "C" && unParsedData.slice(-1) === "F"){
+        console.log("in if y:" + unParsedData);
         leftReading = unParsedData.substring(unParsedData.indexOf('C') + 1, unParsedData.indexOf('F'));
         console.log("y: " + leftReading);
         document.getElementById("lPotVal").textContent = leftReading;
@@ -54,10 +57,10 @@ socket.on('updatePot', function(data){
         dataset.push([rightReading,leftReading]);
        /* point = getCoords(rightReading,leftReading);
         dataset.push(point);
-        document.getElementById("pointVal").textContent = point;
+        document.getElementById("pointVal").textContent = point; */
         //draw on whiteboard
-        drawLine(prevx, point[0], prevy, point[1]); 
-        prevy = point[1]; */
+        drawLine(prevx, rightReading, prevy, leftReading); 
+        prevy = leftReading; 
         //end draw on whiteboard
         update(); //update d3 scatterplot
     }
@@ -181,10 +184,12 @@ function dKin(pl,pr){
 var canvas_width = 500;
 var canvas_height = 300;
 var padding = 30;  // for chart edges
-var xmin = 6;
-var ymin = 15;
-var xmax = 20;
-var ymax = 20;
+var xmin = 9;
+var ymin = 8;
+//var xmax = 20;
+//var ymax = 20;
+var xmax = 14;
+var ymax = 12;
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic
@@ -270,13 +275,13 @@ function update() {
             return yScale(d[1]);
         })
         .attr("fill", "blue")
-        .attr("r", 3);
+        .attr("r", 6.5);
 
 // Update circles
     svg.selectAll("circle")
         .data(dataset)  // Update with new data
         .transition()  // Transition from old to new
-        .duration(500)  // Length of animation
+        /*.duration(500)  // Length of animation
         .each("start", function() {  // Start animation
                 d3.select(this)  // 'this' means the current element
                     .attr("fill", "red")  // Change color
@@ -284,7 +289,7 @@ function update() {
         })
         .delay(function(d, i) {
             return i / dataset.length * 500;  // Dynamic delay (i.e. each item delays a little longer)
-        })
+        }) */
         //.ease("linear")  // Transition easing - default 'variable' (i.e. has acceleration), also: 'circle', 'elastic', 'bounce', 'linear'
         .attr("cx", function(d) {
             return xScale(d[0]);  // Circle's X
@@ -296,8 +301,8 @@ function update() {
             d3.select(this)  // 'this' means the current element
             .transition()
             .duration(500)
-            .attr("fill", "#66ff66")  // Change color
-            .attr("r", 2);  // Change radius
+            .attr("fill", "#ff3399")  // Change color
+            .attr("r", 5);  // Change radius
         });
 
     // Update X Axis

@@ -92,7 +92,7 @@ canvas{
 }
 
 circle{
-    opacity: 0.5;
+    opacity: 0.25;
     /*fill: #33cc33;*/
     stroke: transparent;
     stroke-width: 15px;  

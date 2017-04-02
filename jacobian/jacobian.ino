@@ -1,5 +1,5 @@
 #include <math.h> 
-#include<stdlib.h>
+
 
 //Define Constant
 #define THETAL 55
@@ -24,6 +24,11 @@ int R_pot_pin = A0;
 //haptic
 int L_reading;
 int R_reading;
+float ql,qr,x,y;
+float plx;
+float ply;
+float prx;
+float pry;
 float last_time;
 
 float last_ql;
@@ -82,6 +87,8 @@ void loop(){
     delay(20000);
   }
   
+
+  
   //print x and y to arduino serial monitor
   /*Serial.print("x is ");
   Serial.print(x, DEC);
@@ -101,8 +108,8 @@ void loop(){
       
 
   
-  //draw_figure8_haptic();
-  doWallHaptic();
+  draw_figure8_haptic();
+  //doWallHaptic();
 }
 //===================================================DIRECT KINEMATICS MATH=============================================================================
 
@@ -212,24 +219,24 @@ float calculate_qr(int R_reading){
 }
 
 float calculate_plx(float ql){
-  float plx = (ql)*(0.7071); //cos(thetaL)
+  float plx = ql*(0.7071); //cos(thetaL)
   return plx;
 }
 
 float calculate_ply(float ql){
-  float ply = (ql)*(0.7071);//sin(thetaL)
+  float ply = ql*(0.7071);//sin(thetaL)
   return ply;
 }
 
 float calculate_prx(float qr){
-  float prx = (float)B - ((qr)*(0.7071));//cos(thetaR)
+  float prx = (float)B - (qr*(0.7071));//cos(thetaR)
   //Serial.print("prx is ");
   //Serial.println(prx, DEC);
   return prx;
 }
 
 float calculate_pry(float qr){
-  float pry = (qr)*(0.7071);//sin(thetaR)
+  float pry = qr*(0.7071);//sin(thetaR)
   return pry;
 }
 
@@ -244,11 +251,11 @@ float direct_kin_x (float ql, float qr){
   y = direct_kin_y(plx,ply,prx,pry);
   */
 
-  float pry = calculate_pry(qr + 0.65);
-  float prx = calculate_prx(qr+ 0.65);
+  float pry = calculate_pry(qr);
+  float prx = calculate_prx(qr);
 
-  float ply = calculate_ply(ql+ 0.65);
-  float plx = calculate_plx(ql+ 0.65);
+  float ply = calculate_ply(ql);
+  float plx = calculate_plx(ql);
   
   float p3x = prx - plx;
   float p3y = pry - ply;
@@ -258,7 +265,7 @@ float direct_kin_x (float ql, float qr){
   float u_tran_x = -uy;
   float u_tran_y = ux; 
   float half_basex = ux*(mag/2) + plx;
-  float l = sqrt(square(ARM) - square(mag/2));
+  float l = sqrt(square(ARM) + square(mag/2));
   float x = l*u_tran_x + half_basex;
   return x;
 }
@@ -268,63 +275,21 @@ float direct_kin_y (float ql, float qr){
 
   float pry = calculate_pry(qr);
   float prx = calculate_prx(qr);
+
   float ply = calculate_ply(ql);
   float plx = calculate_plx(ql);
   
- /* Serial.print("plx: ");
-  Serial.println(plx);
-  Serial.print("ply: ");
-  Serial.println(ply);
-  Serial.print("prx: ");
-  Serial.println(prx);
-  Serial.print("pry: ");
-  Serial.println(pry);*/
-  
-  
   float p3x = prx - plx;
   float p3y = pry - ply;
-  
-      
-  /*Serial.print("p3x: ");
-  Serial.println(p3x);
-  Serial.print("p3y: ");
-  Serial.println(p3y);*/
-  
   float mag = abs(sqrt(square(p3x) + square(p3y)));
-  
- /* Serial.print("mag: ");
-  Serial.println(mag);*/
-  
   float ux = p3x/mag;
   float uy = p3y/mag;
-  
- /* Serial.print("ux: ");
-  Serial.println(ux);
-  Serial.print("uy: ");
-  Serial.println(uy);*/
-  
-  //float u_tran_x = -uy;
-  //float u_tran_y = ux; 
-  
-   float u_tran_x = -((p3y/2)/(mag/2));
-   float u_tran_y = ((p3x/2)/(mag/2));
-  /*Serial.print("u_tran_x: ");
-  Serial.println(u_tran_x);
-  Serial.print("u_tran_y: ");
-  Serial.println(u_tran_y);*/
-  
+  float u_tran_x = -uy;
+  float u_tran_y = ux; 
   float half_basey = uy*(mag/2) + ply;
-  //float half_basey = (p3y/2) + ply;
-  
-  /*Serial.print("half_basey: ");
-  Serial.println(half_basey);*/
-
-  float l = sqrt(square(ARM) - square(mag/2));
-  //float y = l*u_tran_y + half_basey;
+  float l = sqrt(square(ARM) + square(mag/2));
   float y = l*u_tran_y + half_basey;
   return y;
-  
-
  }
 
  float inverse_kin_ql(float xb,float yb){ //converts x,y in Bernadette's coordinate system to ql rotor length
@@ -374,11 +339,15 @@ void draw_figure8_haptic() //need to add d-control
   
 
 
-  float desiredX = (15-13.5)*sin(micros() * 0.000030) + 11.5;
-  float desiredY = (15-13.5)*sin(micros() * 0.000030)*cos(micros() * 0.000030) + 10;
+  float desiredX = (15-13.5)*sin(micros() * 0.0000030) + 11.5;
+  float desiredY = (15-13.5)*sin(micros() * 0.0000030)*cos(micros() * 0.0000030) + 10;
 
   //desiredqr = 4.5;
   //desiredql = 3.5;
+  
+  if(micros()%300 == 0){
+   write_to_serial(desiredX,desiredY);
+  }
 
  
   float pScale_L = 275;
@@ -409,13 +378,13 @@ void doWallHaptic(){
 
   L_reading = analogRead(L_pot_pin);
   R_reading = analogRead(R_pot_pin);
-  float ql = abs(calculate_ql(L_reading));
-  float qr = abs(calculate_qr(R_reading));
+  ql = abs(calculate_ql(L_reading));
+  qr = abs(calculate_qr(R_reading));
 
   float currentY = direct_kin_y(ql, qr);
   float currentX = direct_kin_x(ql, qr);
 
-  /*Serial.print("current Y: ");
+  Serial.print("current Y: ");
   Serial.println(currentY, DEC);
 
   Serial.print("current X: ");
@@ -425,10 +394,7 @@ void doWallHaptic(){
   Serial.println(ql, DEC);
 
   Serial.print("qr: ");
-  Serial.println(qr, DEC);*/
-  //if(micros()%100 == 0){
-   write_to_serial(currentX,currentY);
-  //}
+  Serial.println(qr, DEC);
 
   float desiredY;
 
@@ -445,8 +411,8 @@ void doWallHaptic(){
 void do_PID(float pScale_L,float dScale_L,float iScale_L, float pScale_R,float dScale_R, float iScale_R, float desiredX, float desiredY){
   L_reading = analogRead(L_pot_pin);
   R_reading = analogRead(R_pot_pin);
-  float ql = abs(calculate_ql(L_reading));
-  float qr = abs(calculate_qr(R_reading));
+  ql = abs(calculate_ql(L_reading));
+  qr = abs(calculate_qr(R_reading));
 
   
   float desiredqr = inverse_kin_qr(desiredX,desiredY);
@@ -631,9 +597,8 @@ void write_to_serial(float x, float y){
         sprintf(yStr, "%c%c%c%c%c%c", beginL, yBuffer[0],yBuffer[1],yBuffer[2],yBuffer[3],endL); 
       }
       Serial.write(yStr);
-
 }
-//===================================CUSTOM PWM FREQUENCY====================================================
+
  /**
  * Divides a given PWM pin frequency by a divisor.
  * 
@@ -728,6 +693,5 @@ void setPwmFrequency(int pin, int divisor) {
     TCCR2B = TCCR2B & 0b11111000 | mode;
   }
 }
-
 
 
