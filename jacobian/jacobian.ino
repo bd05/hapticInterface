@@ -2,7 +2,7 @@
 
 
 //Define Constant
-#define THETAL 55
+#define THETAL 55 // TODO: Didn't we re-measure these to be 45??  
 #define THETAR 50
 #define ARM 12.6
 #define B 26
@@ -155,6 +155,68 @@ void loop(){
       off_motor_right();
       digitalWrite(ledGreen, LOW);
     }  
+     else if(receivedVal == 5){
+      digitalWrite(ledGreen, HIGH);
+      while (digitalRead(7))
+      {
+        draw_circle_haptic();
+      }
+      inputString = "";
+      toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+      digitalWrite(ledGreen, LOW);
+    }
+  // TODO: Add haptic modes
+    /* 
+     else if(receivedVal == 3){
+      digitalWrite(ledGreen, HIGH);
+      while (digitalRead(7))
+      {
+        doElasticHaptic();
+      }
+      inputString = "";
+      toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+      digitalWrite(ledGreen, LOW);
+    } 
+     else if(receivedVal == 2){
+      digitalWrite(ledGreen, HIGH);
+      while (digitalRead(7))
+      {
+        doCanoeingHaptic();
+      }
+      inputString = "";
+      toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+      digitalWrite(ledGreen, LOW);
+    } 
+     else if(receivedVal == 1){
+      digitalWrite(ledGreen, HIGH);
+      while (digitalRead(7))
+      {
+        doRhombusHaptic();
+      }
+      inputString = "";
+      toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+      digitalWrite(ledGreen, LOW);
+    } */
+     else if(receivedVal == 0){
+      digitalWrite(ledGreen, HIGH);
+      while (digitalRead(7))
+      {
+        doWallHaptic();
+      }
+      inputString = "";
+      toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+      digitalWrite(ledGreen, LOW);
+    }
   }
       
 
@@ -543,16 +605,67 @@ void draw_flower_haptic() //need to add d-control
 { 
   //recalc position
 
-  float omega = 0.0000030;
+  float omega = 0.0000010;
   float period = (2*PI)/omega;
 
  
  float desiredX = (2*(sin(4*(micros() * omega))*cos(micros()*omega)))+13;
   float desiredY = (2*(sin(4*(micros() * omega))*sin(micros()*omega)))+12;
 
-  if(micros()%100 == 0){
-   write_to_serial(desiredX,desiredY);
+   /* if(micros()%650 == 0){ 
+      L_reading = analogRead(L_pot_pin); //try  moving this out of the if statement if problems occur
+      R_reading = analogRead(R_pot_pin);
+      ql = abs(calculate_ql(L_reading));
+      qr = abs(calculate_qr(R_reading));
+      float currentY = direct_kin_y(ql, qr);
+      float currentX = direct_kin_x(ql, qr);
+      write_to_serial(currentX,currentY);*/
+  if(micros()%300 == 0){
+      write_to_serial(desiredX,desiredY);
   }
+  
+ // float desiredX = 13; 
+  //float desiredY = 12;
+  
+  //desiredqr = 4.5;
+  //desiredql = 3.5;
+
+  float pScale_L = 350;
+  float dScale_L = 26000;
+  float iScale_L = 0.05;
+  
+  float iScale_R = 0.05;
+  float pScale_R = 450;
+  float dScale_R = 21000;
+
+  do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
+  
+  return;
+}
+
+
+
+void draw_circle_haptic() //need to add d-control
+{ 
+  //recalc position
+
+  float omega = 0.0000080;
+  float period = (2*PI)/omega;
+
+   float desiredX = (15-13.5)*sin(micros() * omega) + 12;
+  float desiredY = (15-13.5)*cos(micros() * omega) + 12;
+
+    if(micros()%300 == 0){ 
+      L_reading = analogRead(L_pot_pin); //try  moving this out of the if statement if problems occur
+      R_reading = analogRead(R_pot_pin);
+      ql = abs(calculate_ql(L_reading));
+      qr = abs(calculate_qr(R_reading));
+      float currentY = direct_kin_y(ql, qr);
+      float currentX = direct_kin_x(ql, qr);
+      write_to_serial(currentX,currentY);}
+  /*if(micros()%300 == 0){
+      write_to_serial(desiredX,desiredY);
+  }*/
   
  // float desiredX = 13; 
   //float desiredY = 12;
@@ -576,7 +689,7 @@ void draw_spiral_haptic() //need to add d-control
 { 
   //recalc position
   
-  float omega = 0.000030;
+  float omega = 0.0000030;
   float period = (2*PI)/omega;
 
    int actual_period; 
@@ -589,10 +702,21 @@ void draw_spiral_haptic() //need to add d-control
    actual_period = micros()/period;
    modulated_period = actual_period % 8;
 
-   amplitude = 1.5 * sin(micros() * (omega/10)) + 0.75;
+   amplitude = 1 * sin(micros() * (omega/5)) + 0.50;
    
-   desiredX = amplitude *sin(micros() * omega) + 11.5;
-   desiredY = amplitude *cos(micros() * omega) + 10;
+   desiredX = amplitude *sin(micros() * omega) + 13;
+   desiredY = amplitude *cos(micros() * omega) + 12;
+   
+   if(micros()%350 == 0){
+      L_reading = analogRead(L_pot_pin); //try  moving this out of the if statement if problems occur
+      R_reading = analogRead(R_pot_pin);
+      ql = abs(calculate_ql(L_reading));
+      qr = abs(calculate_qr(R_reading));
+      float currentY = direct_kin_y(ql, qr);
+      float currentX = direct_kin_x(ql, qr);
+      write_to_serial(currentX,currentY);
+      //write_to_serial(desiredX,desiredY);
+  }
 
  // float desiredX = 13; 
   //float desiredY = 12;
