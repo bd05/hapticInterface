@@ -19,7 +19,6 @@ int L_pot_pin = A1;
 int R_pot_pin = A0;
 
 
-
 //Variables
 //haptic
 int L_reading;
@@ -47,13 +46,19 @@ volatile int pwm_left; //for the haptic logic, being changed in check_walls()
 volatile int pwm_right;
 
 
-
-
 //Varialbes
 //presribed_path
 int q1_done;
 int q2_done;
 int prescribe_path = 1;
+
+//LED status pins
+const int led13 = 13;
+const int ledRed = A4;
+const int ledGreen = A5;
+String inputString = "";         // a string to hold incoming data
+boolean toggleComplete = false;  // whether the string is complete
+int fig8Count = 0;
 
 void setup() {
 
@@ -72,6 +77,12 @@ void setup() {
 
   //setPwmFrequency(6, 1024);
   //setPwmFrequency(5, 1024);
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+  pinMode(A4,OUTPUT);
+  digitalWrite(A4,LOW);
+  pinMode(A5,OUTPUT);
+  analogWrite(A5,LOW);
 
 
 /*
@@ -94,34 +105,51 @@ void setup() {
 
 
 void loop(){
-// prescribe_path = digitalRead(7);
- if(prescribe_path == 0)
-  {
-    //do_prescribe_path();
-    delay(20000);
+  //===============================================UI=====================================
+     // Recieve data from Node and write it to a String
+     
+           digitalWrite(ledRed,HIGH);
+      delay(1000);
+      digitalWrite(ledRed,LOW);
+   while (Serial.available() && toggleComplete == false) {
+    char inChar = (char)Serial.read();
+    if(inChar == 'E'){ // end character for toggle LED
+     toggleComplete = true;
+    }
+    else{
+      digitalWrite(ledGreen,HIGH);
+      delay(1000);
+      digitalWrite(ledGreen,LOW);
+      inputString += inChar; 
+    }
   }
-  
-
-  
-  //print x and y to arduino serial monitor
-  /*Serial.print("x is ");
-  Serial.print(x, DEC);
-  Serial.print("    ");
-  Serial.print("y is ");
-  Serial.println(y, DEC); */
-  
-  //print x and y for web client to see
- /* Serial.print("B"); // begin character 
-  Serial.print(R_reading);  
-  Serial.print("E"); // end character
-  Serial.print("C"); // begin character 
-  Serial.print(L_reading);  
-  Serial.print("F"); // end character */
- // delay(50);
-
+  if(!Serial.available() && toggleComplete == true)
+  {
+    int receivedVal = stringToInt(); // convert String to int. 
+    if(receivedVal == 0){
+      digitalWrite(led13,HIGH);
+      delay(1000);
+      digitalWrite(led13,LOW);
+      toggleComplete = false;
+    }
+    if(receivedVal == 4){
+      digitalWrite(ledGreen,HIGH);
+      delay(1000);
+      digitalWrite(ledGreen,LOW);
+      //digitalWrite(ledRed,1);
+      toggleComplete = false;
+    }
+    if(receivedVal == 6){
+      digitalWrite(ledRed,HIGH);
+      delay(1000);
+      digitalWrite(ledRed,LOW);
+      toggleComplete = false;
+      draw_figure8_haptic();  
+    }  
+  }
       
 
-  draw_flower_haptic();
+  //draw_flower_haptic();
  //draw_figure8_haptic();
  //draw_spiral_haptic();
   //doWallHaptic();
@@ -459,6 +487,9 @@ float direct_kin_y (float ql, float qr){
 
 void draw_figure8_haptic() //need to add d-control
 { 
+        digitalWrite(led13,HIGH);
+      delay(1000);
+      digitalWrite(led13,LOW);
   //recalc position
 
   float omega = 0.0000060;
@@ -488,8 +519,12 @@ void draw_figure8_haptic() //need to add d-control
 
   do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
   
-  
-  return;
+  fig8Count++;
+  if(fig8Count > 5000){
+    toggleComplete = false;
+    analogWrite(ledGreen,0);
+    return;
+  }
 }
 
 void draw_flower_haptic() //need to add d-control
@@ -522,7 +557,6 @@ void draw_flower_haptic() //need to add d-control
   float dScale_R = 21000;
 
   do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
-  
   
   return;
 }
@@ -806,6 +840,15 @@ void write_to_serial(float x, float y){
         sprintf(yStr, "%c%c%c%c%c%c", beginL, yBuffer[0],yBuffer[1],yBuffer[2],yBuffer[3],endL); 
       }
       Serial.write(yStr);
+}
+//=============================================convert string to int for incoming data=================================
+int stringToInt()
+{
+    char charHolder[inputString.length()+1];
+    inputString.toCharArray(charHolder,inputString.length()+1);
+    inputString = "";
+    int _recievedVal = atoi(charHolder);
+    return _recievedVal;
 }
  /**
  * Divides a given PWM pin frequency by a divisor.

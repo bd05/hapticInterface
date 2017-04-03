@@ -50,9 +50,15 @@ void loop() {
   if(!Serial.available() && toggleComplete == true)
   {
     // convert String to int. 
-    int recievedVal = stringToInt();
-    digitalWrite(ledPin,recievedVal); 
-    toggleComplete = false;
+    int receivedVal = stringToInt();
+    /*digitalWrite(ledPin,receivedVal); 
+    toggleComplete = false;*/
+    if(receivedVal == 0)
+      digitalWrite(led13,1);
+    if(receivedVal == 1)
+      digitalWrite(led1,1);
+    if(receivedVal == 2)
+      digitalWrite(led2,1);      
   }
 
 //===============================POTENTIOMETER READINGS SEND TO NODE.JS SERVER====================================

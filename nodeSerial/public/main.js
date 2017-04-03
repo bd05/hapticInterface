@@ -73,8 +73,8 @@ function changeMode(mode){
         console.log("sending elastic");
         hashCode = '0';
     }
-    if (mode == "tar"){
-        console.log("sending tar");
+    if (mode == "canoe"){
+        console.log("sending canoe");
         hashCode = '1';
     }
     if (mode == "rhombus"){
@@ -92,19 +92,19 @@ function changeShape(shape){
     var hashCode;
     if (shape == "flower"){
         console.log("sending flower");
-        hashCode = '2';
+        hashCode = '4';
     }
     if (shape == "circle"){
         console.log("sending circle");
-        hashCode = '3';
+        hashCode = '5';
     }
     if (shape == "fig-eight"){
         console.log("sending figure eight");
-        hashCode = '4';
+        hashCode = '6';
     }
     if (shape == "spiral"){
         console.log("sending spiral");
-        hashCode = '5';
+        hashCode = '7';
     }
     socket.emit('selected shape', hashCode);
 }
