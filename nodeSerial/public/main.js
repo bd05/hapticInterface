@@ -28,7 +28,7 @@ ctx.scale(3, 3);
 //sockets
 socket.on('updatePot', function(data){
     unParsedData += data;
-    console.log("before if: " + unParsedData);
+    //console.log("before if: " + unParsedData);
     //right potentiometer reading
     if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
         console.log("in if x:" + unParsedData);
@@ -37,14 +37,10 @@ socket.on('updatePot', function(data){
         console.log("x: " + rightReading);
         dataset.push([rightReading,leftReading]); 
         unParsedData = ""; //reset string that receives data
-        //math transforms:
-        /*point = getCoords(rightReading,leftReading);
-        dataset.push(point);
-        document.getElementById("pointVal").textContent = point;*/
-        //draw on whiteboard
+       /* //draw on whiteboard
         drawLine(prevx, rightReading, prevy, leftReading); 
         prevx = rightReading; 
-        //end draw on whiteboard
+        //end draw on whiteboard*/
         update(); //update d3 scatterplot
     }
     //left potentiometer reading
@@ -55,12 +51,9 @@ socket.on('updatePot', function(data){
         document.getElementById("lPotVal").textContent = leftReading;
         unParsedData = "";
         dataset.push([rightReading,leftReading]);
-       /* point = getCoords(rightReading,leftReading);
-        dataset.push(point);
-        document.getElementById("pointVal").textContent = point; */
         //draw on whiteboard
-        drawLine(prevx, rightReading, prevy, leftReading); 
-        prevy = leftReading; 
+        /*drawLine(prevx, rightReading, prevy, leftReading); 
+        prevy = leftReading; */
         //end draw on whiteboard
         update(); //update d3 scatterplot
     }
@@ -76,21 +69,29 @@ function toggle(){
 //dropdowns
 function changeMode(mode){
     var hashCode;
-    if (mode == "haptic"){
-        console.log("sending haptic");
+    if (mode == "elastic"){
+        console.log("sending elastic");
         hashCode = '0';
     }
-    if (mode == "autonomous"){
-        console.log("sending autonomous");
+    if (mode == "tar"){
+        console.log("sending tar");
         hashCode = '1';
+    }
+    if (mode == "rhombus"){
+        console.log("sending rhombus");
+        hashCode = '2';
+    }
+    if (mode == "wall"){
+        console.log("sending wall");
+        hashCode = '3';
     }
     socket.emit('selected mode', hashCode);
 }
 
 function changeShape(shape){
     var hashCode;
-    if (shape == "line"){
-        console.log("sending line");
+    if (shape == "flower"){
+        console.log("sending flower");
         hashCode = '2';
     }
     if (shape == "circle"){
@@ -100,6 +101,10 @@ function changeShape(shape){
     if (shape == "fig-eight"){
         console.log("sending figure eight");
         hashCode = '4';
+    }
+    if (shape == "spiral"){
+        console.log("sending spiral");
+        hashCode = '5';
     }
     socket.emit('selected shape', hashCode);
 }
@@ -188,8 +193,8 @@ var xmin = 9;
 var ymin = 8;
 //var xmax = 20;
 //var ymax = 20;
-var xmax = 14;
-var ymax = 12;
+var xmax = 16;
+var ymax = 15;
 
 // Create scale functions
 var xScale = d3.scale.linear()  // xScale is width of graphic

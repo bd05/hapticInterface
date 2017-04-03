@@ -41,16 +41,26 @@ io.on('connection', function (socket) {
         });
         socket.on('selected mode', function (data) {
             console.log("selected mode: " + data);
-            mode = data;
+            //mode = data;
+            port.write(data + "E", function(err){
+                if (err) {
+                  return console.log('Error on write: ', err.message);
+                }
+            });
         });
         socket.on('selected shape', function(data){
             console.log("selected shape: " + data);
-            shape = data;
+            //shape = data;
+            port.write(data + "E", function(err){
+                if (err) {
+                  return console.log('Error on write: ', err.message);
+                }
+            });
         });
-        socket.on('writeToFile', function(data){
+        /*socket.on('writeToFile', function(data){
             var text = JSON.stringify(data);
             fs.writeFile( data_file, text);
-        });
+        });*/
 
 });
 
