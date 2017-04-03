@@ -38,7 +38,7 @@ float p_i_cumulative_L;
 char beginR = 'B';
 char endR = 'E';
 char beginL = 'C';
-char endL = 'F';
+char endL = 'E';
 
 
 
@@ -105,46 +105,55 @@ void setup() {
 
 
 void loop(){
-  //===============================================UI=====================================
-     // Recieve data from Node and write it to a String
-     
-           digitalWrite(ledRed,HIGH);
-      delay(1000);
-      digitalWrite(ledRed,LOW);
-   while (Serial.available() && toggleComplete == false) {
+//===============================================UI=====================================
+  // Recieve data from Node and write it to a String    
+  while (Serial.available() && toggleComplete == false) {
     char inChar = (char)Serial.read();
     if(inChar == 'E'){ // end character for toggle LED
      toggleComplete = true;
     }
     else{
-      digitalWrite(ledGreen,HIGH);
-      delay(1000);
-      digitalWrite(ledGreen,LOW);
       inputString += inChar; 
     }
   }
   if(!Serial.available() && toggleComplete == true)
   {
     int receivedVal = stringToInt(); // convert String to int. 
-    if(receivedVal == 0){
-      digitalWrite(led13,HIGH);
-      delay(1000);
-      digitalWrite(led13,LOW);
+    if(receivedVal == 7){
+       digitalWrite(ledGreen, HIGH);
+      while (digitalRead(7))
+      {
+        draw_spiral_haptic();
+      }
+      inputString = "";
       toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+        digitalWrite(ledGreen, LOW);
     }
-    if(receivedVal == 4){
-      digitalWrite(ledGreen,HIGH);
-      delay(1000);
-      digitalWrite(ledGreen,LOW);
-      //digitalWrite(ledRed,1);
+    else if(receivedVal == 4){
+       digitalWrite(ledGreen, HIGH);
+      while (digitalRead(7))
+      {
+        draw_flower_haptic();
+      }
+      inputString = "";
       toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+       digitalWrite(ledGreen, LOW);
     }
-    if(receivedVal == 6){
-      digitalWrite(ledRed,HIGH);
-      delay(1000);
-      digitalWrite(ledRed,LOW);
+    else if(receivedVal == 6){
+      digitalWrite(ledGreen, HIGH);
+      while (digitalRead(7))
+      {
+        draw_figure8_haptic();
+      }
+      inputString = "";
       toggleComplete = false;
-      draw_figure8_haptic();  
+      off_motor_left();
+      off_motor_right();
+      digitalWrite(ledGreen, LOW);
     }  
   }
       
@@ -487,21 +496,24 @@ float direct_kin_y (float ql, float qr){
 
 void draw_figure8_haptic() //need to add d-control
 { 
-        digitalWrite(led13,HIGH);
-      delay(1000);
-      digitalWrite(led13,LOW);
   //recalc position
-
   float omega = 0.0000060;
   float period = (2*PI)/omega;
 
   float desiredX = (15-13.5)*sin(micros() * omega) + 13;
   float desiredY = (15-13.5)*sin(micros() * omega)*cos(micros() * omega) + 12;
 
-
-  /*if(micros()%300 == 0){
-   write_to_serial(desiredX,desiredY);
-  }*/
+//========draw actual position on GUI======================
+  if(micros()%300 == 0){
+      L_reading = analogRead(L_pot_pin); //try  moving this out of the if statement if problems occur
+      R_reading = analogRead(R_pot_pin);
+      ql = abs(calculate_ql(L_reading));
+      qr = abs(calculate_qr(R_reading));
+      float currentY = direct_kin_y(ql, qr);
+      float currentX = direct_kin_x(ql, qr);
+      write_to_serial(currentX,currentY);
+  }
+//=========================================================
   
  // float desiredX = 13; 
   //float desiredY = 12;
@@ -519,12 +531,12 @@ void draw_figure8_haptic() //need to add d-control
 
   do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
   
-  fig8Count++;
+  /*fig8Count++;
   if(fig8Count > 5000){
     toggleComplete = false;
     analogWrite(ledGreen,0);
     return;
-  }
+  }*/
 }
 
 void draw_flower_haptic() //need to add d-control

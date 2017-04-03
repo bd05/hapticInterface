@@ -30,9 +30,11 @@ socket.on('updatePot', function(data){
     unParsedData += data;
     //console.log("before if: " + unParsedData);
     //right potentiometer reading
-    if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
+    //if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
+    if(unParsedData.charAt(0) === "B"){
         console.log("in if x:" + unParsedData);
-        rightReading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
+        //rightReading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
+        rightReading = unParsedData.substring(unParsedData.indexOf('B')+1);
         document.getElementById("rPotVal").textContent = rightReading;
         console.log("x: " + rightReading);
         dataset.push([rightReading,leftReading]); 
@@ -44,9 +46,12 @@ socket.on('updatePot', function(data){
         update(); //update d3 scatterplot
     }
     //left potentiometer reading
-    if(unParsedData.charAt(0) === "C" && unParsedData.slice(-1) === "F"){
+    //if(unParsedData.charAt(0) === "C" && unParsedData.slice(-1) === "F"){
+    if(unParsedData.charAt(0) === "C"){    
         console.log("in if y:" + unParsedData);
-        leftReading = unParsedData.substring(unParsedData.indexOf('C') + 1, unParsedData.indexOf('F'));
+        //leftReading = unParsedData.substring(unParsedData.indexOf('C') + 1, unParsedData.indexOf('F'));
+        leftReading = unParsedData.substring(unParsedData.indexOf('C')+1);
+        console.log("y: " + leftReading);
         console.log("y: " + leftReading);
         document.getElementById("lPotVal").textContent = leftReading;
         unParsedData = "";
