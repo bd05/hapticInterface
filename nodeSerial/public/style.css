@@ -38,7 +38,27 @@ p{
 	margin-left: 5%;
 }
 
-.directions-container{
+/*============================general styling========================*/
+.container{
+    padding-top: 70px;
+}
+
+.point-input{
+    margin-top: 20px !important;
+}
+
+#refresh-button{
+    margin: auto;
+    padding-top: 10px;
+    margin-bottom: 20px;
+}
+
+#scatter-plot{
+    margin: auto;
+}
+/*===================================================================*/
+
+/*.directions-container{
 	display: flex;
 	justify-content: center;
 }
@@ -70,12 +90,12 @@ select {
     outline:none;
     display: inline-block;
 }
-
+*/
 /*canvas*/
-canvas{
+/*canvas{
     border: 1px solid blue;
     margin-top: 15px;
-}
+}*/
 
 /*D3 scatterplot*/
             /* Format X and Y Axis */

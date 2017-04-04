@@ -1,11 +1,14 @@
 var socket = io.connect('http://localhost:8080');
 
 window.onload=function(){
-    var toggleLEDBtn = document.getElementById("toggleLED");
-    toggleLEDBtn.addEventListener("click", toggle);
+    document.getElementById("point-button").onclick = function() {submitPoint()};
+    document.getElementById("refresh-button").onclick = function() {removePlot()};
     var rPotVal = document.getElementById("rPotVal");
     var lPotVal = document.getElementById("lPotVal");
-    var pointVal = document.getElementById("pointVal");
+    /*var toggleLEDBtn = document.getElementById("toggleLED");
+    toggleLEDBtn.addEventListener("click", toggle);*/
+    //var pointVal = document.getElementById("pointVal");
+    //createPlot();
 }
 
 var LEDStatus = 0;
@@ -20,46 +23,31 @@ var ql; //q1_a in arduino code
 var x_a;
 var y_a;
 var point;
-var canvas = document.getElementById("whiteboard");
+/*var canvas = document.getElementById("whiteboard");
 var ctx = canvas.getContext('2d');
 ctx.strokeStyle = 'rgba(63, 116, 191, 0.05)';
-ctx.scale(3, 3);
+ctx.scale(3, 3);*/
 
 //sockets
 socket.on('updatePot', function(data){
     unParsedData += data;
-    //console.log("before if: " + unParsedData);
-    //right potentiometer reading
-    //if(unParsedData.charAt(0) === "B" && unParsedData.slice(-1) === "E"){
     if(unParsedData.charAt(0) === "B"){
         console.log("in if x:" + unParsedData);
-        //rightReading = unParsedData.substring(unParsedData.indexOf('B') + 1, unParsedData.indexOf('E'));
         rightReading = unParsedData.substring(unParsedData.indexOf('B')+1);
-        document.getElementById("rPotVal").textContent = rightReading;
+        //document.getElementById("rPotVal").textContent = rightReading;
         console.log("x: " + rightReading);
         dataset.push([rightReading,leftReading]); 
         unParsedData = ""; //reset string that receives data
-       /* //draw on whiteboard
-        drawLine(prevx, rightReading, prevy, leftReading); 
-        prevx = rightReading; 
-        //end draw on whiteboard*/
         update(); //update d3 scatterplot
     }
     //left potentiometer reading
-    //if(unParsedData.charAt(0) === "C" && unParsedData.slice(-1) === "F"){
     if(unParsedData.charAt(0) === "C"){    
         console.log("in if y:" + unParsedData);
-        //leftReading = unParsedData.substring(unParsedData.indexOf('C') + 1, unParsedData.indexOf('F'));
         leftReading = unParsedData.substring(unParsedData.indexOf('C')+1);
         console.log("y: " + leftReading);
-        console.log("y: " + leftReading);
-        document.getElementById("lPotVal").textContent = leftReading;
+        //document.getElementById("lPotVal").textContent = leftReading;
         unParsedData = "";
         dataset.push([rightReading,leftReading]);
-        //draw on whiteboard
-        /*drawLine(prevx, rightReading, prevy, leftReading); 
-        prevy = leftReading; */
-        //end draw on whiteboard
         update(); //update d3 scatterplot
     }
 });
@@ -71,6 +59,15 @@ function toggle(){
     socket.emit('update LED', LEDStatus);
 }
 
+//get desired point
+
+function submitPoint(){
+    console.log("submit point");
+    var desPx =  document.getElementById('point-inputx').value;
+    var desPy =  document.getElementById('point-inputy').value;
+    console.log(desPx + " " + desPy);
+}
+
 //dropdowns
 function changeMode(mode){
     var hashCode;
@@ -78,12 +75,12 @@ function changeMode(mode){
         console.log("sending elastic");
         hashCode = '0';
     }
-    if (mode == "canoe"){
-        console.log("sending canoe");
+    if (mode == "muck"){
+        console.log("sending muck");
         hashCode = '1';
     }
-    if (mode == "rhombus"){
-        console.log("sending rhombus");
+    if (mode == "circle"){
+        console.log("sending circle");
         hashCode = '2';
     }
     if (mode == "wall"){
@@ -99,17 +96,17 @@ function changeShape(shape){
         console.log("sending flower");
         hashCode = '4';
     }
-    if (shape == "circle"){
+    /*if (shape == "circle"){
         console.log("sending circle");
         hashCode = '5';
-    }
+    }*/
     if (shape == "fig-eight"){
         console.log("sending figure eight");
-        hashCode = '6';
+        hashCode = '5';
     }
     if (shape == "spiral"){
         console.log("sending spiral");
-        hashCode = '7';
+        hashCode = '6';
     }
     socket.emit('selected shape', hashCode);
 }
@@ -188,7 +185,7 @@ function dKin(pl,pr){
 }
 
 
-//==========================D3 scatter plot========================================================
+//===========================================D3 scatter plot========================================================
 
 // Setup settings for graphic
 var canvas_width = 500;
@@ -196,8 +193,6 @@ var canvas_height = 300;
 var padding = 30;  // for chart edges
 var xmin = 9;
 var ymin = 8;
-//var xmax = 20;
-//var ymax = 20;
 var xmax = 16;
 var ymax = 15;
 
@@ -209,6 +204,8 @@ var xScale = d3.scale.linear()  // xScale is width of graphic
 var yScale = d3.scale.linear()  // yScale is height of graphic
         .domain([ymin,ymax])
         .range([canvas_height - padding, padding]);  // remember y starts on top going down so we flip
+
+//function createPlot(){
 
 // Define X axis
 var xAxis = d3.svg.axis()
@@ -223,7 +220,7 @@ var yAxis = d3.svg.axis()
     .ticks(10);
 
 // Create SVG element
-var svg = d3.select("h3")  // This is where we put our vis
+var svg = d3.select("#scatter-plot")  // This is where we put our vis
     .append("svg")
     .attr("width", canvas_width)
     .attr("height", canvas_height)
@@ -265,6 +262,7 @@ svg.append("g")
     .attr("class", "y axis")
     .attr("transform", "translate(" + padding +",0)")
     .call(yAxis);
+//}
 
 function update() {
     // Update scale domains
@@ -291,16 +289,6 @@ function update() {
     svg.selectAll("circle")
         .data(dataset)  // Update with new data
         .transition()  // Transition from old to new
-        /*.duration(500)  // Length of animation
-        .each("start", function() {  // Start animation
-                d3.select(this)  // 'this' means the current element
-                    .attr("fill", "red")  // Change color
-                    .attr("r", 5);  // Change size
-        })
-        .delay(function(d, i) {
-            return i / dataset.length * 500;  // Dynamic delay (i.e. each item delays a little longer)
-        }) */
-        //.ease("linear")  // Transition easing - default 'variable' (i.e. has acceleration), also: 'circle', 'elastic', 'bounce', 'linear'
         .attr("cx", function(d) {
             return xScale(d[0]);  // Circle's X
         })
@@ -328,6 +316,9 @@ function update() {
        .call(yAxis);
 }
 
-
-
+function removePlot(){
+    console.log("removing plot");
+    d3.select("svg").remove(); //remove old scatter plot
+    createPlot();
+}
 

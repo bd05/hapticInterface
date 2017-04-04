@@ -8,49 +8,57 @@
     </head>
     <body>
         <div class="container">
-          <div class="directions-container">
-            <div class="direction"> 
+            <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4"> 
               <h4>Haptic</h4>
-              <select onchange="changeMode(this.value)">
+              <select class="form-control" onchange="changeMode(this.value)">
                 <option value="nothing"> </option>
                 <option value="elastic">Elastic</option>
-                <option value="canoe">Canoeing</option>
-                <option value="rhombus">Rhombus</option>
+                <option value="muck">Muck</option>
+                <option value="circle">Circle</option>
                 <option value="wall">Wall</option>
               </select>
             </div>
 
-            <div class="direction"> 
+          <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4"> 
               <h4>Autonomous</h4>
-              <select onchange="changeShape(this.value)">
+              <select class="form-control" onchange="changeShape(this.value)">
                 <option value="nothing"> </option>
                 <option value="flower">Flower</option>
-                <option value="circle">Circle</option>
                 <option value="fig-eight">Figure Eight</option>
                 <option value="spiral">Spiral</option>
               </select>
-            </div>
           </div>
-        <button id="toggleLED" type="button" class="btn btn-success">toggle LED</button>
-        </div>
-        <div class="container">
-          
-        </div>
-        <div class="container">
+
+          <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+              <h4>Go to desired point</h4>
+              <form class="form-inline">
+                <div class="form-group">
+                    <label class="sr-only">Type in desired x</label>
+                    <input type="number" class="form-control" id="point-inputx" placeholder="Type in desired x">
+                    <label class="sr-only">Type in desired y</label>
+                    <input type="number" class="form-control point-input" id="point-inputy" placeholder="Type in desired y">
+                </div>
+              </form>
+              <button type="submit" class="btn btn-info point-input" id="point-button">Go to point</button>
+          </div>
+        <!--<button id="toggleLED" type="button" class="btn btn-success">toggle LED</button>-->
+       </div>
+        <!--<div class="container">
           <span id="rPotVal"></span>
           <br>
           <span id="lPotVal"></span>
           <br>
           <p>[x,y]: </p>
           <span id="pointVal"></span>
-          <br>
-          <canvas id="whiteboard" width="200" height="200"></canvas>
-        </div>
+          <br> 
+        </div>-->
         <div class="container">
-            <h3></h3>
-        </div>
-        <div class="container">
-            <div id="potBarGraph"></div>
+            <div class="col-xs-7 col-sm-7 col-md-6 col-lg-6">
+                <div id="scatter-plot"></div> <!--d3 graph renders in these tags-->
+            </div>
+            <div class="col-xs-7 col-sm-5 col-md-6 col-lg-6">
+                <button type="submit" class="btn btn-danger" id="refresh-button">Refresh chart</button>
+            </div>
         </div>
     <!-- javascript files -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>

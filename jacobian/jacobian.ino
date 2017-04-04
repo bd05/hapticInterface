@@ -2,7 +2,7 @@
 
 
 //Define Constant
-#define THETAL 55 // TODO: Didn't we re-measure these to be 45??  
+#define THETAL 55
 #define THETAR 50
 #define ARM 12.6
 #define B 26
@@ -17,6 +17,7 @@ int R2_motor_pin = 11;
 int MAX_PWM = 255;
 int L_pot_pin = A1;
 int R_pot_pin = A0;
+
 
 
 //Variables
@@ -35,15 +36,21 @@ float last_qr;
 float p_i_cumulative_R;
 float p_i_cumulative_L;
 
+//====================GUI variables======================
 char beginR = 'B';
 char endR = 'E';
 char beginL = 'C';
 char endL = 'E';
 
+String inputString = ""; // a string to hold incoming data
+boolean toggleComplete = false; 
+//========================================================
 
 
 volatile int pwm_left; //for the haptic logic, being changed in check_walls()
 volatile int pwm_right;
+
+
 
 
 //Varialbes
@@ -51,14 +58,6 @@ volatile int pwm_right;
 int q1_done;
 int q2_done;
 int prescribe_path = 1;
-
-//LED status pins
-const int led13 = 13;
-const int ledRed = A4;
-const int ledGreen = A5;
-String inputString = "";         // a string to hold incoming data
-boolean toggleComplete = false;  // whether the string is complete
-int fig8Count = 0;
 
 void setup() {
 
@@ -77,12 +76,6 @@ void setup() {
 
   //setPwmFrequency(6, 1024);
   //setPwmFrequency(5, 1024);
-  pinMode(13,OUTPUT);
-  digitalWrite(13,LOW);
-  pinMode(A4,OUTPUT);
-  digitalWrite(A4,LOW);
-  pinMode(A5,OUTPUT);
-  analogWrite(A5,LOW);
 
 
 /*
@@ -105,7 +98,7 @@ void setup() {
 
 
 void loop(){
-//===============================================UI=====================================
+  //===============================================UI=====================================
   // Recieve data from Node and write it to a String    
   while (Serial.available() && toggleComplete == false) {
     char inChar = (char)Serial.read();
@@ -119,94 +112,39 @@ void loop(){
   if(!Serial.available() && toggleComplete == true)
   {
     int receivedVal = stringToInt(); // convert String to int. 
-    if(receivedVal == 7){
-       digitalWrite(ledGreen, HIGH);
+    if(receivedVal == 0){
       while (digitalRead(7))
       {
-        draw_spiral_haptic();
+        doSpringHaptic();
       }
       inputString = "";
       toggleComplete = false;
       off_motor_left();
       off_motor_right();
-        digitalWrite(ledGreen, LOW);
     }
-    else if(receivedVal == 4){
-       digitalWrite(ledGreen, HIGH);
+    else if(receivedVal == 1){
+      digitalWrite(A5, HIGH);
       while (digitalRead(7))
       {
-        draw_flower_haptic();
+        doMuckHaptic();
       }
       inputString = "";
       toggleComplete = false;
       off_motor_left();
       off_motor_right();
-       digitalWrite(ledGreen, LOW);
+       digitalWrite(A5, LOW);
     }
-    else if(receivedVal == 6){
-      digitalWrite(ledGreen, HIGH);
+    else if(receivedVal == 2){
       while (digitalRead(7))
       {
-        draw_figure8_haptic();
+        doCircleHaptic();
       }
       inputString = "";
       toggleComplete = false;
       off_motor_left();
       off_motor_right();
-      digitalWrite(ledGreen, LOW);
-    }  
-     else if(receivedVal == 5){
-      digitalWrite(ledGreen, HIGH);
-      while (digitalRead(7))
-      {
-        draw_circle_haptic();
-      }
-      inputString = "";
-      toggleComplete = false;
-      off_motor_left();
-      off_motor_right();
-      digitalWrite(ledGreen, LOW);
     }
-  // TODO: Add haptic modes
-    /* 
-     else if(receivedVal == 3){
-      digitalWrite(ledGreen, HIGH);
-      while (digitalRead(7))
-      {
-        doElasticHaptic();
-      }
-      inputString = "";
-      toggleComplete = false;
-      off_motor_left();
-      off_motor_right();
-      digitalWrite(ledGreen, LOW);
-    } 
-     else if(receivedVal == 2){
-      digitalWrite(ledGreen, HIGH);
-      while (digitalRead(7))
-      {
-        doCanoeingHaptic();
-      }
-      inputString = "";
-      toggleComplete = false;
-      off_motor_left();
-      off_motor_right();
-      digitalWrite(ledGreen, LOW);
-    } 
-     else if(receivedVal == 1){
-      digitalWrite(ledGreen, HIGH);
-      while (digitalRead(7))
-      {
-        doRhombusHaptic();
-      }
-      inputString = "";
-      toggleComplete = false;
-      off_motor_left();
-      off_motor_right();
-      digitalWrite(ledGreen, LOW);
-    } */
-     else if(receivedVal == 0){
-      digitalWrite(ledGreen, HIGH);
+    else if(receivedVal == 3){
       while (digitalRead(7))
       {
         doWallHaptic();
@@ -215,17 +153,239 @@ void loop(){
       toggleComplete = false;
       off_motor_left();
       off_motor_right();
-      digitalWrite(ledGreen, LOW);
+    }
+    else if(receivedVal == 4){
+      while (digitalRead(7))
+      {
+        draw_flower_haptic();
+      }
+      inputString = "";
+      toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+    }
+    else if(receivedVal == 5){
+      while (digitalRead(7))
+      {
+        draw_figure8_haptic();
+      }
+      inputString = "";
+      toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
+    } 
+    else if(receivedVal == 6){
+      while (digitalRead(7))
+      {
+        draw_spiral_haptic();
+      }
+      inputString = "";
+      toggleComplete = false;
+      off_motor_left();
+      off_motor_right();
     }
   }
       
-
-  //draw_flower_haptic();
- //draw_figure8_haptic();
- //draw_spiral_haptic();
-  //doWallHaptic();
 }
 //===================================================DIRECT KINEMATICS MATH=============================================================================
+
+void draw_sponge_haptic(){
+  float bottomWall = 12.5;
+  
+
+  float pScale_L = 11505;
+  float dScale_L = 155000;
+  float iScale_L = 0;
+  
+  float iScale_R = 0;
+  float pScale_R = 11505;
+  float dScale_R = 155000;
+
+  L_reading = analogRead(L_pot_pin);
+  R_reading = analogRead(R_pot_pin);
+  ql = abs(calculate_ql(L_reading));
+  qr = abs(calculate_qr(R_reading));
+
+  float currentY = direct_kin_y(ql, qr);
+  float currentX = direct_kin_x(ql, qr);
+
+  float deltaQ_L = -(last_ql - ql);
+  float deltaQ_R = -(last_qr - qr);
+
+  if(currentY < bottomWall){
+    do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, currentX, bottomWall);
+  }
+  else{
+      off_motor_right();
+      off_motor_left();
+  }
+  
+}
+
+void draw_flower_haptic() //need to add d-control
+{ 
+  //recalc position
+
+  float omega = 0.0000030;
+  float period = (2*PI)/omega;
+
+ 
+ float desiredX = (2*(sin(4*(micros() * omega))*cos(micros()*omega)))+13;
+  float desiredY = (2*(sin(4*(micros() * omega))*sin(micros()*omega)))+12;
+
+ if(micros()%200 == 0){
+   write_to_serial(desiredX,desiredY);
+  }
+  
+ // float desiredX = 13; 
+  //float desiredY = 12;
+  
+  //desiredqr = 4.5;
+  //desiredql = 3.5;
+
+  float pScale_L = 450;
+  float dScale_L = 35000;
+  float iScale_L = 0.05*0;
+  
+  float iScale_R = 0.05*0;
+  float pScale_R = 450;
+  float dScale_R = 45000;
+
+  do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
+  
+  
+  return;
+}
+void draw_spiral_haptic() //need to add d-control
+{ 
+  //recalc position
+  
+  float omega = 0.0000030;
+  float period = (2*PI)/omega;
+
+   int actual_period; 
+   int modulated_period; 
+
+   float amplitude;
+   float desiredX;
+   float desiredY;
+
+   actual_period = micros()/period;
+   modulated_period = actual_period % 8;
+
+   amplitude = 1 * sin(micros() * (omega/5)) + 0.50;
+   
+   desiredX = amplitude *sin(micros() * omega) + 13;
+   desiredY = amplitude *cos(micros() * omega) + 12;
+   
+   if(micros()%350 == 0){
+      L_reading = analogRead(L_pot_pin); //try  moving this out of the if statement if problems occur
+      R_reading = analogRead(R_pot_pin);
+      ql = abs(calculate_ql(L_reading));
+      qr = abs(calculate_qr(R_reading));
+      float currentY = direct_kin_y(ql, qr);
+      float currentX = direct_kin_x(ql, qr);
+      write_to_serial(currentX,currentY);
+      //write_to_serial(desiredX,desiredY);
+  }
+
+ // float desiredX = 13; 
+  //float desiredY = 12;
+  
+  //desiredqr = 4.5;
+  //desiredql = 3.5;
+
+  float pScale_L = 350;
+  float dScale_L = 26000;
+  float iScale_L = 0.05;
+  
+  float iScale_R = 0.05;
+  float pScale_R = 450;
+  float dScale_R = 21000;
+
+  do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
+  
+  
+  return;
+}
+
+float calculate_qr(int R_reading){
+if (R_reading <= 868)
+  {
+    qr = 3.9 - (((float)868-R_reading)/44);
+  }
+  else if (R_reading <= 876)
+  {
+    qr = 4.1 - (((float)876-R_reading)/32);
+  }
+  else if (R_reading <= 887)
+  {
+    qr = 4.4 - (((float)887-R_reading)/44);
+  }
+   else if (R_reading <= 896)
+  {
+    qr = 4.5 - (((float)896-R_reading)/36);
+  }
+   else if (R_reading <= 906)
+  {
+    qr = 4.6 - (((float)906-R_reading)/40);
+  }
+   else if (R_reading <= 915)
+  {
+    qr =  4.8 - (((float)915-R_reading)/36);
+  }
+   else if (R_reading <= 925)
+  {
+    qr =  5.4 - (((float)925-R_reading)/17);
+  }
+  else if(R_reading <= 933){
+    qr =  5.5 - (((float)933-R_reading)/80);
+  }
+  else if (R_reading <= 941)
+  {
+    qr =  5.8 - (((float)941-R_reading)/27);
+  }
+  else if (R_reading <= 951)
+  {
+    qr = 5.9 - (((float)951-R_reading)/100);
+  }
+  else if (R_reading <= 956)
+  {
+    qr =  6.1 - (((float)956 - R_reading)/25);
+  }
+    else if (R_reading <= 965)
+  {
+    qr =  6.3 - (((float)965 - R_reading)/36);
+  }
+    else if (R_reading <= 970)
+  {
+    qr =  6.4 - (((float)970 - R_reading)/20);
+  }
+    else if (R_reading <= 986)
+  {
+    qr =  6.8 - (((float)986 - R_reading)/64);
+  }
+    else if (R_reading <= 992)
+  {
+    qr =  6.9 - (((float)992 - R_reading)/24);
+  }
+    else if (R_reading <= 1002)
+  {
+    qr =  7.2 - (((float)1002 - R_reading)/40);
+  }
+    else if (R_reading <= 1011)
+  {
+    qr =  7.5 - (((float)1011 - R_reading)/36);
+  }
+    else if (R_reading <= 1020)
+  {
+    qr =  7.7 - (((float)1020 - R_reading)/36);
+  }
+  else
+  {
+    qr = 8 - (((float)1023 - R_reading)/12);
+  }
+}
 
 float calculate_ql(int L_reading)
 {
@@ -313,89 +473,8 @@ float calculate_ql(int L_reading)
     ql =  8 - (((float)1023-L_reading)/ 32);
   }
   return ql;
- 
 }
-float calculate_qr(int R_reading){
-  float qr;
 
-  if (R_reading <= 868)
-  {
-    qr = 3.9 - (((float)868-R_reading)/44);
-  }
-  else if (R_reading <= 876)
-  {
-    qr = 4.1 - (((float)876-R_reading)/32);
-  }
-  else if (R_reading <= 887)
-  {
-    qr = 4.4 - (((float)887-R_reading)/44);
-  }
-   else if (R_reading <= 896)
-  {
-    qr = 4.5 - (((float)896-R_reading)/36);
-  }
-   else if (R_reading <= 906)
-  {
-    qr = 4.6 - (((float)906-R_reading)/40);
-  }
-   else if (R_reading <= 915)
-  {
-    qr =  4.8 - (((float)915-R_reading)/36);
-  }
-   else if (R_reading <= 925)
-  {
-    qr =  5.1 - (((float)925-R_reading)/40);
-  }
-  else if(R_reading <= 933){
-    qr =  5.4 - (((float)933-R_reading)/32);
-  }
-  else if (R_reading <= 941)
-  {
-    qr =  5.5 - (((float)941-R_reading)/32);
-  }
-  else if (R_reading <= 951)
-  {
-    qr = 5.9 - (((float)951-R_reading)/40);
-  }
-  else if (R_reading <= 956)
-  {
-    qr =  6.1 - (((float)956 - R_reading)/20);
-  }
-    else if (R_reading <= 965)
-  {
-    qr =  6.3 - (((float)965 - R_reading)/36);
-  }
-    else if (R_reading <= 970)
-  {
-    qr =  6.4 - (((float)970 - R_reading)/20);
-  }
-    else if (R_reading <= 986)
-  {
-    qr =  6.8 - (((float)986 - R_reading)/64);
-  }
-    else if (R_reading <= 992)
-  {
-    qr =  6.9 - (((float)992 - R_reading)/24);
-  }
-    else if (R_reading <= 1002)
-  {
-    qr =  7.2 - (((float)1002 - R_reading)/40);
-  }
-    else if (R_reading <= 1011)
-  {
-    qr =  7.5 - (((float)1011 - R_reading)/36);
-  }
-    else if (R_reading <= 1020)
-  {
-    qr =  7.7 - (((float)1020 - R_reading)/36);
-  }
-  else
-  {
-    qr = 8 - (((float)1023 - R_reading)/12);
-  }
-  return qr;
-
-}
 
 float calculate_plx(float ql){
   float plx = ql*(0.7071); //cos(thetaL)
@@ -555,11 +634,24 @@ float direct_kin_y (float ql, float qr){
  }
 //================================================DRAW LINE=========================================================
 
+void ocean_haptic(){
+  float waveSpeed = 4;
+  float omega = 0.000060;
+
+  float startX = 12.2;
+  float oscillationX = 11.0;
+
+//  float desiredX = (15-13.5)*sin(micros() * omega) + startX + ;
+  float oscillationY = (15-13.5)*sin(micros() * omega)*cos(micros() * omega) + 12;
+  
+}
 
 void draw_figure8_haptic() //need to add d-control
 { 
   //recalc position
+
   float omega = 0.0000060;
+  omega = 0.0000060;
   float period = (2*PI)/omega;
 
   float desiredX = (15-13.5)*sin(micros() * omega) + 13;
@@ -583,159 +675,150 @@ void draw_figure8_haptic() //need to add d-control
   //desiredqr = 4.5;
   //desiredql = 3.5;
 
-  float pScale_L = 350;
-  float dScale_L = 26000;
-  float iScale_L = 0.05;
+  float pScale_L = 1050;
+  float dScale_L = 43000;
+  float iScale_L = 0.05*0;
   
-  float iScale_R = 0.05;
-  float pScale_R = 450;
-  float dScale_R = 21000;
+  float iScale_R = 0.05*0;
+  float pScale_R = 850;
+  float dScale_R = 50000;
 
   do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
   
-  /*fig8Count++;
-  if(fig8Count > 5000){
-    toggleComplete = false;
-    analogWrite(ledGreen,0);
-    return;
-  }*/
+  
+  return;
 }
 
-void draw_flower_haptic() //need to add d-control
-{ 
-  //recalc position
+//Sucks the center into a point, and emulates an elastic in all directions
+void doSpringHaptic(){
+  float centerX = 11.5;
+  float centerY = 12.5;
+  
 
-  float omega = 0.0000010;
-  float period = (2*PI)/omega;
+  float pScale_L = 150;
+  float dScale_L = 1200;
+  float iScale_L = 0;
 
- 
- float desiredX = (2*(sin(4*(micros() * omega))*cos(micros()*omega)))+13;
-  float desiredY = (2*(sin(4*(micros() * omega))*sin(micros()*omega)))+12;
+  float iScale_R = 0;
+  float pScale_R = 150;
+//  float dScale_R = 1200;
+  float dScale_R = 1200;
+  L_reading = analogRead(L_pot_pin);
+  R_reading = analogRead(R_pot_pin);
+  ql = abs(calculate_ql(L_reading));
+  qr = abs(calculate_qr(R_reading));
 
-   /* if(micros()%650 == 0){ 
-      L_reading = analogRead(L_pot_pin); //try  moving this out of the if statement if problems occur
-      R_reading = analogRead(R_pot_pin);
-      ql = abs(calculate_ql(L_reading));
-      qr = abs(calculate_qr(R_reading));
-      float currentY = direct_kin_y(ql, qr);
-      float currentX = direct_kin_x(ql, qr);
-      write_to_serial(currentX,currentY);*/
+  float currentY = direct_kin_y(ql, qr);
+  float currentX = direct_kin_x(ql, qr);
+  
+  if(micros()%200 == 0){
+   write_to_serial(currentX,currentY);
+  }
+
+  if(abs(centerX - currentX) > 0.1 || abs(centerY - currentY) > 0.1){
+     do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, centerX, centerY);
+  }
+  else{
+    off_motor_right();
+    off_motor_left();
+  }
+
+
+}
+
+void doMuckHaptic(){
+
+  L_reading = analogRead(L_pot_pin);
+  R_reading = analogRead(R_pot_pin);
+  ql = abs(calculate_ql(L_reading));
+  qr = abs(calculate_qr(R_reading));
+
+  float currentY = direct_kin_y(ql, qr);
+  float currentX = direct_kin_x(ql, qr);
+
   if(micros()%300 == 0){
-      write_to_serial(desiredX,desiredY);
+   write_to_serial(currentX,currentY);
   }
   
- // float desiredX = 13; 
-  //float desiredY = 12;
+  float deltaQ_L = -(last_ql - ql);
+  float deltaQ_R = -(last_qr - qr);
   
-  //desiredqr = 4.5;
-  //desiredql = 3.5;
+  float deltaT = (float)(micros() - last_time);
+  float V_L = deltaQ_L / deltaT;
+  float V_R = deltaQ_R / deltaT;
 
-  float pScale_L = 350;
-  float dScale_L = 26000;
-  float iScale_L = 0.05;
-  
-  float iScale_R = 0.05;
-  float pScale_R = 450;
-  float dScale_R = 21000;
 
-  do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
+  float pScale_L = 0;
+  float dScale_L = 20355000;
+  float iScale_L = 0;
   
-  return;
+  float iScale_R = 0;
+  float pScale_R = 0;
+  float dScale_R = 20355000;
+
+  if(abs(V_L) > 0.0000000001 || abs(V_R) > 0.0000000001){
+    do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, currentX, currentY);
+  }
+  else{
+    off_motor_right();
+    off_motor_left();
+  }
+
+  
 }
 
+void doCircleHaptic(){
 
+  L_reading = analogRead(L_pot_pin);
+  R_reading = analogRead(R_pot_pin);
+  ql = abs(calculate_ql(L_reading));
+  qr = abs(calculate_qr(R_reading));
 
-void draw_circle_haptic() //need to add d-control
-{ 
-  //recalc position
-
-  float omega = 0.0000080;
-  float period = (2*PI)/omega;
-
-   float desiredX = (15-13.5)*sin(micros() * omega) + 12;
-  float desiredY = (15-13.5)*cos(micros() * omega) + 12;
-
-    if(micros()%300 == 0){ 
-      L_reading = analogRead(L_pot_pin); //try  moving this out of the if statement if problems occur
-      R_reading = analogRead(R_pot_pin);
-      ql = abs(calculate_ql(L_reading));
-      qr = abs(calculate_qr(R_reading));
-      float currentY = direct_kin_y(ql, qr);
-      float currentX = direct_kin_x(ql, qr);
-      write_to_serial(currentX,currentY);}
-  /*if(micros()%300 == 0){
-      write_to_serial(desiredX,desiredY);
-  }*/
+  float pScale_L = 3505;
+  float dScale_L = 15000;
+  float iScale_L = 0;
   
- // float desiredX = 13; 
-  //float desiredY = 12;
+  float iScale_R = 0;
+  float pScale_R = 3505;
+  float dScale_R = 15000;
+
+  float centerX = 12.5;
+  float centerY = 11.5;
+
+  float smallRadius = 3.0;
+  float bigRadius = 1.5;
   
-  //desiredqr = 4.5;
-  //desiredql = 3.5;
 
-  float pScale_L = 350;
-  float dScale_L = 26000;
-  float iScale_L = 0.05;
-  
-  float iScale_R = 0.05;
-  float pScale_R = 450;
-  float dScale_R = 21000;
+  float currentY = direct_kin_y(ql, qr);
+  float currentX = direct_kin_x(ql, qr);
 
-  do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
-  
-  return;
-}
-void draw_spiral_haptic() //need to add d-control
-{ 
-  //recalc position
-  
-  float omega = 0.0000030;
-  float period = (2*PI)/omega;
-
-   int actual_period; 
-   int modulated_period; 
-
-   float amplitude;
-   float desiredX;
-   float desiredY;
-
-   actual_period = micros()/period;
-   modulated_period = actual_period % 8;
-
-   amplitude = 1 * sin(micros() * (omega/5)) + 0.50;
-   
-   desiredX = amplitude *sin(micros() * omega) + 13;
-   desiredY = amplitude *cos(micros() * omega) + 12;
-   
-   if(micros()%350 == 0){
-      L_reading = analogRead(L_pot_pin); //try  moving this out of the if statement if problems occur
-      R_reading = analogRead(R_pot_pin);
-      ql = abs(calculate_ql(L_reading));
-      qr = abs(calculate_qr(R_reading));
-      float currentY = direct_kin_y(ql, qr);
-      float currentX = direct_kin_x(ql, qr);
+  if(micros()%300 == 0){
       write_to_serial(currentX,currentY);
-      //write_to_serial(desiredX,desiredY);
+       
   }
 
- // float desiredX = 13; 
-  //float desiredY = 12;
-  
-  //desiredqr = 4.5;
-  //desiredql = 3.5;
+  float deltaX = currentX - centerX;
+  float deltaY = currentY - centerY;
 
-  float pScale_L = 350;
-  float dScale_L = 26000;
-  float iScale_L = 0.05;
-  
-  float iScale_R = 0.05;
-  float pScale_R = 450;
-  float dScale_R = 21000;
+  float currentRadius = sqrt(square(deltaX) + square(deltaY));
 
-  do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
   
+
+  if(currentRadius > bigRadius){
+    //do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, (currentX - deltaX) + 0.3, currentY - deltaY);
+    off_motor_right();
+    off_motor_left();
+  }
+
+  else if(currentRadius < smallRadius){
+    do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R,(currentX + deltaX), currentY + deltaY);
+  }
+
+  else{
+    off_motor_right();
+    off_motor_left();
+  }
   
-  return;
 }
 
 void doWallHaptic(){
@@ -760,17 +843,28 @@ void doWallHaptic(){
 
   float currentY = direct_kin_y(ql, qr);
   float currentX = direct_kin_x(ql, qr);
+  
+  if(micros()%200 == 0){
+   write_to_serial(currentX,currentY);
+  }
+
+  float deltaQ_L = -(last_ql - ql);
+  float deltaQ_R = -(last_qr - qr);
+
+  float deltaT = (float)(micros() - last_time);
+  float V_L = deltaQ_L / deltaT;
+  float V_R = deltaQ_R / deltaT;
 
 
   float desiredY;
 
   if(currentY > topWall){
     desiredY = topWall;
-    do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, currentX, desiredY - 1.3);
+    do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, currentX, currentY - 1.5);
   }
   else if(currentY < bottomWall){
     desiredY = bottomWall;
-    do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, currentX - 0.2, desiredY + 0.8);
+    do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, currentX - 0.2, currentY + 1);
   }
   else{
     off_motor_right();
@@ -785,6 +879,7 @@ void do_PID(float pScale_L,float dScale_L,float iScale_L, float pScale_R,float d
   L_reading = analogRead(L_pot_pin);
   R_reading = analogRead(R_pot_pin);
   ql = abs(calculate_ql(L_reading));
+
   qr = abs(calculate_qr(R_reading));
 
   
@@ -815,7 +910,7 @@ void do_PID(float pScale_L,float dScale_L,float iScale_L, float pScale_R,float d
   float pd_L = p_L + d_L + i_L;
   float pd_R = p_R + d_R + i_R;
   
-  motor_right(round(pd_R)  );
+  motor_right(round(pd_R));
 
   motor_left(round(pd_L));
   last_time = micros();
@@ -936,21 +1031,9 @@ void out_motor_right(int pwm_right)
 
   return;
 }
+
 //================================================WRITE TO SERIAL MONITOR======================================
 void write_to_serial(float x, float y){
-      /*char xBuffer[2];
-      dtostrf(x,2,3,xBuffer);
-      char yBuffer[2];
-      dtostrf(y,2,3,yBuffer);
-      Serial.write('B');
-      Serial.write(xBuffer[0]);
-      Serial.write(xBuffer[1]);
-      Serial.write('E');
-      Serial.write('C');
-      Serial.write(yBuffer[0]);
-      Serial.write(yBuffer[1]);
-      Serial.write('F');*/
-  
       char xStr[6];
       if( x < 10){
         char xBuffer[1];
@@ -986,6 +1069,9 @@ int stringToInt()
     int _recievedVal = atoi(charHolder);
     return _recievedVal;
 }
+
+//================================================WRITE TO SERIAL MONITOR======================================
+
  /**
  * Divides a given PWM pin frequency by a divisor.
  * 
@@ -1080,7 +1166,5 @@ void setPwmFrequency(int pin, int divisor) {
     TCCR2B = TCCR2B & 0b11111000 | mode;
   }
 }
-
-
 
 
