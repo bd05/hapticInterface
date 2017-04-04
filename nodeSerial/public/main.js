@@ -2,7 +2,6 @@ var socket = io.connect('http://localhost:8080');
 
 window.onload=function(){
     document.getElementById("point-button").onclick = function() {submitPoint()};
-    document.getElementById("refresh-button").onclick = function() {removePlot()};
     var rPotVal = document.getElementById("rPotVal");
     var lPotVal = document.getElementById("lPotVal");
     /*var toggleLEDBtn = document.getElementById("toggleLED");
@@ -314,11 +313,5 @@ function update() {
        .transition()
        .duration(100)
        .call(yAxis);
-}
-
-function removePlot(){
-    console.log("removing plot");
-    d3.select("svg").remove(); //remove old scatter plot
-    createPlot();
 }
 

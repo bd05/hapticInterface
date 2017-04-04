@@ -637,18 +637,6 @@ float direct_kin_y (float ql, float qr){
  }
 //================================================DRAW LINE=========================================================
 
-void ocean_haptic(){
-  float waveSpeed = 4;
-  float omega = 0.000060;
-
-  float startX = 12.2;
-  float oscillationX = 11.0;
-
-//  float desiredX = (15-13.5)*sin(micros() * omega) + startX + ;
-  float oscillationY = (15-13.5)*sin(micros() * omega)*cos(micros() * omega) + 12;
-  
-}
-
 void draw_figure8_haptic() //need to add d-control
 { 
   //recalc position
@@ -709,9 +697,9 @@ void doSpringHaptic(){
   float currentY = direct_kin_y(ql, qr);
   float currentX = direct_kin_x(ql, qr);
   
-  if(micros()%200 == 0){
+  /*if(micros()%200 == 0){
    write_to_serial(currentX,currentY);
-  }
+  }*/
 
   if(abs(centerX - currentX) > 0.1 || abs(centerY - currentY) > 0.1){
      do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, centerX, centerY);
@@ -734,9 +722,9 @@ void doMuckHaptic(){
   float currentY = direct_kin_y(ql, qr);
   float currentX = direct_kin_x(ql, qr);
 
-  if(micros()%300 == 0){
+  /*if(micros()%300 == 0){
    write_to_serial(currentX,currentY);
-  }
+  }*/
   
   float deltaQ_L = -(last_ql - ql);
   float deltaQ_R = -(last_qr - qr);
