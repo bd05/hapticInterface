@@ -289,19 +289,22 @@ void draw_spiral_haptic() //need to add d-control
       //write_to_serial(desiredX,desiredY);
   }
 
- // float desiredX = 13; 
-  //float desiredY = 12;
-  
-  //desiredqr = 4.5;
-  //desiredql = 3.5;
-
-  float pScale_L = 350;
+/*  float pScale_L = 350;
   float dScale_L = 26000;
   float iScale_L = 0.05;
   
   float iScale_R = 0.05;
   float pScale_R = 450;
-  float dScale_R = 21000;
+  float dScale_R = 21000;*/
+  
+  float pScale_L = 650;
+  float dScale_L = 60000;
+  float iScale_L = 0.05*0;
+  
+  float iScale_R = 0.05*0;
+  float pScale_R = 650;
+  float dScale_R = 60000;
+
 
   do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
   
@@ -669,19 +672,14 @@ void draw_figure8_haptic() //need to add d-control
   }
 //=========================================================
   
- // float desiredX = 13; 
-  //float desiredY = 12;
-  
-  //desiredqr = 4.5;
-  //desiredql = 3.5;
-
-  float pScale_L = 1050;
-  float dScale_L = 43000;
+//  float pScale_L = 1050;
+  float pScale_L = 650;
+  float dScale_L = 60000;
   float iScale_L = 0.05*0;
   
   float iScale_R = 0.05*0;
-  float pScale_R = 850;
-  float dScale_R = 50000;
+  float pScale_R = 650;
+  float dScale_R = 60000;
 
   do_PID(pScale_L, dScale_L, iScale_L, pScale_R, dScale_R, iScale_R, desiredX, desiredY);
   
